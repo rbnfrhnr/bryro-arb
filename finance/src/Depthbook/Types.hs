@@ -12,7 +12,7 @@ import Types
      A valid CurrencyPair could be LTCUSD
 -}
 data DepthBook = DepthBook {
-     depthBookCurrencyPair :: !CurrencyPair      -- ^ Identifier for this Depthbook. (LTCUSD, XRPUSD etc)
+     depthBookCurrencyPair :: !CurrencyPair   -- ^ Identifier for this Depthbook. (LTCUSD, XRPUSD etc)
     ,depthBookAsk          :: Map Order Order -- ^ Collection of asking prices for this CurrencyPair
     ,depthBookBid          :: Map Order Order -- ^ Collection of biding prices fot this CurrencyPair
 } deriving (Show)

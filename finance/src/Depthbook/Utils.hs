@@ -1,6 +1,8 @@
 module Depthbook.Utils
        (
-         updateDepthBook
+         getHigherBids
+        ,getLowerAsks
+        ,updateDepthBook
         ,openDepthBook
        ) where
 
