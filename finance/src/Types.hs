@@ -36,11 +36,11 @@ data CurrencyPair = LTCUSD | XRPUSD | ETHUSD | BCHUSD deriving (Show)
 
 data Exchange = Bitstamp | Kraken | Binance deriving (Show)
 
--- | CurrencyPairs equality is lexicographically
+-- | CurrencyPairs equality is lexicographic
 instance Eq CurrencyPair where
     (==) cur1 cur2 = (==) (show cur1) (show cur2)
 
--- | CurrencyPairs ordering is lexicographically
+-- | CurrencyPairs ordering is lexicographic
 instance Ord CurrencyPair where
     compare cur1 cur2 = compare (show cur1) (show cur2)
 
