@@ -14,12 +14,12 @@ import Control.Concurrent
 
 
 {- endpoint, port, queue, function applied at con open -}
-runSecureClient :: String -> String-> S.PortNumber -> (BS.ByteString -> IO ()) -> (W.Connection -> IO ()) -> IO ()
+runSecureClient :: String -> String-> S.PortNumber -> (B.ByteString -> IO ()) -> (W.Connection -> IO ()) -> IO ()
 runSecureClient host path port onMessage onOpen = do
     context <- C.initConnectionContext
     connection <- C.connectTo context (connectionParams host port)
     stream <- Stream.makeStream (reader connection) (writer connection)
-    newCon <- WS.newClientConnection stream host path connectionOptions headers
+    newCon <- WS.newClientConnection stream host path connectionOptions []
 
     onOpen newCon
 
@@ -28,11 +28,11 @@ runSecureClient host path port onMessage onOpen = do
 
 
 
-worker :: W.Connection -> (BS.ByteString -> IO ()) -> IO ()
+worker :: W.Connection -> (B.ByteString -> IO ()) -> IO ()
 worker connection onMessage = loop
                     where loop = do
                                    msg <- WS.receiveData connection
-                                   onMessage (msg :: BS.ByteString)
+                                   onMessage (msg :: B.ByteString)
                                    loop
 
 
@@ -66,6 +66,3 @@ connectionOptions = WS.defaultConnectionOptions
 unpackMsg :: Maybe BS.ByteString -> BS.ByteString
 unpackMsg Nothing = error "couldn't parse msg"
 unpackMsg (Just x) = x
-
-headers :: WS.Headers
-headers = []
