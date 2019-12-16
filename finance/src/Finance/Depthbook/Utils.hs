@@ -1,4 +1,4 @@
-module Depthbook.Utils
+module Finance.Depthbook.Utils
        (
          getHigherBids
         ,getLowerAsks
@@ -6,8 +6,8 @@ module Depthbook.Utils
         ,openDepthBook
        ) where
 
-import Types
-import Depthbook.Types
+import Finance.Types
+import Finance.Depthbook.Types
 import qualified Data.Map as Map
 
 {- | This function updates a given DepthBook by the order provided

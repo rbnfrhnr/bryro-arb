@@ -1,11 +1,11 @@
-module Depthbook.Types
+module Finance.Depthbook.Types
        (
          DepthBook(..)
         ,DepthBookCollection(..)
        ) where
 
 import Data.Map
-import Types
+import Finance.Types
 
 {- | This Data-Structure keeps track of all the Ask and Bid prices of a certain Currency Pair.
      It holds prices regardless of their source exchange. It's ordered by Currency Pair.

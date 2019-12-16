@@ -1,10 +1,10 @@
-module Arbitrage.Utils(
+module Finance.Arbitrage.Utils(
 ) where
 
-import Arbitrage.Types
-import Types
-import Depthbook.Types
-import Depthbook.Utils as DepthBook
+import Finance.Arbitrage.Types
+import Finance.Types
+import Finance.Depthbook.Types
+import Finance.Depthbook.Utils as DepthBook
 import Data.Map as Map
 
 
