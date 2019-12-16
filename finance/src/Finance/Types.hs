@@ -1,4 +1,4 @@
-module Types
+module Finance.Types
     (
        BaseOrder(..)
       ,CurrencyPair(..)

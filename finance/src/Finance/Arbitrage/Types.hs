@@ -1,4 +1,4 @@
-module Arbitrage.Types (
+module Finance.Arbitrage.Types (
        Spread(..)
       ,SpreadBook
       ,SpreadKey
@@ -6,7 +6,7 @@ module Arbitrage.Types (
 ) where
 
 
-import Types
+import Finance.Types
 import Data.Map
 
 data Spread = Spread {
