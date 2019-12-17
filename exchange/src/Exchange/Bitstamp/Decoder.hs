@@ -9,11 +9,12 @@ import GHC.Generics
 import Finance.Types
 import Exchange.Types
 
+{- | actual payload from an orderbook update event from bitstamp. -}
 data Data = Data{
-    asks :: [[Double]],
-    bids :: [[Double]],
-    timestamp :: Int,
-    microtimestamp:: Int
+    asks           :: ![[Double]] -- ^ array which represents a tuple. fst: price, snd: qty
+   ,bids           :: ![[Double]] -- ^ array which represents a tuple. fst: price, snd: qty
+   ,timestamp      :: !Int        -- ^ timestamp of the event (bitstamp server time)
+   ,microtimestamp :: !Int        -- ^ timestamp in microseconds (bitstamp server time)
 } deriving (Show, Generic)
 
 instance FromJSON Data

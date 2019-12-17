@@ -3,6 +3,7 @@ module Finance.Types
        BaseOrder(..)
       ,CurrencyPair(..)
       ,Exchange(..)
+      ,Fee(..)
       ,Order(..)
 
 
@@ -14,6 +15,12 @@ import Data.Map
 {- | Basic typeclass to convert certain values to a csv representation -}
 class Csv a where
     toCsv :: a -> String
+
+{- | class to map an order to a fee-applied-order, given the fee representation
+     This way we can map the orders based on the many different ways of how fees get applied to orders
+-}
+class Fee a where
+    applyFee :: Order -> a -> Maybe Order
 
 
 {- | Base representation of an order offered through an exchange. -}

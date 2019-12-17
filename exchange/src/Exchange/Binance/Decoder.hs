@@ -10,12 +10,13 @@ import Exchange.Types
 import Finance.Types
 
 
+{- | represents a WebSocket Message for an orderbook Update -}
 data BinanceMessage = BinanceMessage {
-    event :: String,
-    eventTime :: Int,
-    symbol :: String,
-    bids :: [[Double]],
-    asks :: [[Double]]
+    event     :: !String     -- ^ name of the event. defined by binance to identify what kind of message was received
+   ,eventTime :: !Int        -- ^ timestamp of the message
+   ,symbol    :: !String     -- ^ currencypair for which the update was received
+   ,bids      :: ![[Double]] -- ^ array which represents a tuple. fst: price, snd: qty
+   ,asks      :: ![[Double]] -- ^ array which represents a tuple. fst: price, snd: qty
 } deriving (Show, Generic)
 
 
@@ -45,6 +46,7 @@ instance (ExchangeOrder a) => ExchangeOrder (Maybe a)
   where toOrder (Just message) = toOrder message
         toOrder Nothing        = []
 
+{- | maps the currencypair used by binance to our internal representation-}
 toCurrencyPair :: String -> CurrencyPair
 toCurrencyPair "LTCUSDT" = LTCUSD
 toCurrencyPair "XRPUSDT" = XRPUSD
