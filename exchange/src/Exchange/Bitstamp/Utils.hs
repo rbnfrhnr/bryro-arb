@@ -4,32 +4,37 @@ module Exchange.Bitstamp.Utils (
 ) where
 
 import qualified Control.Concurrent.Chan as C
+import qualified Control.Concurrent.MVar as MVar
 import qualified Data.Aeson as Aeson
 import qualified Data.ByteString.Internal as B
 import qualified Exchange.Network.Socket as Socket
+import qualified Exchange.Bitstamp.Secured as BitstampSecure
+import Control.Concurrent
 import Finance.Types
 import Exchange.Bitstamp.Decoder
+import Exchange.Bitstamp.Types
 import Network.WebSockets
 import Exchange.Types
 
 websocketHost :: String
 websocketHost = "ws.bitstamp.net"
 
+{- | Websocket worker which receives the order-book updates-}
 subscribeToDepthBook :: C.Chan [Order] -> IO ()
 subscribeToDepthBook queue = Socket.runSecureClient websocketHost "/" 443 (\byteStringMsg -> C.writeChan queue $ toOrder (Aeson.decode byteStringMsg :: Maybe BitstampMessage)) subscribe
 
-subscribeToFees :: IO ()
-subscribeToFees = putStrLn "SubscribeToFee"
-
-getBalance :: IO ()
-getBalance = putStrLn "fetch balance"
-
-placeOrder :: IO ()
-placeOrder = putStrLn "place Order"
-
-cancelOrder :: IO ()
-cancelOrder = putStrLn "cancel Order"
-
+{- | Small worker which fetches the current applicable fees in a given interval -}
+subscribeToFees :: MVar.MVar BitstampFeeTable -> IO ()
+subscribeToFees feeTableHolder =  do
+                                  forkIO $ workerLoop
+                                  return ()
+                where workerLoop = do
+                                   maybeFeeTable <- BitstampSecure.getBitstampFee
+                                   putStrLn "updated fees for Bitstamp"
+                                   case maybeFeeTable of
+                                                 Just feeTable -> MVar.putMVar feeTableHolder feeTable
+                                   threadDelay 60000000
+                                   workerLoop
 
 subscribe :: Connection -> IO ()
 subscribe connection = do

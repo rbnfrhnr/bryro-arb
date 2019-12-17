@@ -22,12 +22,19 @@ description:         Please see the README on GitHub at <https://github.com/gith
 dependencies:
   - aeson  >=1.4.4.0
   - base >= 4.7 && < 5
+  - base16-bytestring >=0.1.1.6
   - bytestring ==0.10.8.2
   - connection ==0.3.1
   - containers >=0.6.0.1
+  - cryptohash-sha256 >=0.11.101.0
   - finance >= 0.1.0.0
+  - http-conduit >=2.3.7.2
+  - http-client >=0.6.4
+  - http-types >=0.12.3
   - network >=2.8.0.1
   - text >=1.2.3.1
+  - time >=1.8.0.2
+  - uuid >=1.3.13
   - vector >=0.12.0.3
   - websockets >=0.12.5.3
 
