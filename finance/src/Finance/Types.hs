@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric #-}
 module Finance.Types
     (
        BaseOrder(..)
@@ -11,6 +12,8 @@ module Finance.Types
     ) where
 
 import Data.Map
+import GHC.Generics
+import Data.Aeson
 
 {- | Basic typeclass to convert certain values to a csv representation -}
 class Csv a where
@@ -30,18 +33,22 @@ data BaseOrder = BaseOrder {
   ,orderCurrentPrice :: !Double       -- ^ the currently offered price for this order.
   ,orderQuantity     :: !Double       -- ^ the offered quantity for this order
   ,orderTimestamp    :: !Int          -- ^ the time at which this order was last updated / created
-} deriving (Show)
+} deriving (Show, Generic)
 
 
 {- | An order can either be an Ask- or a Bid-Order-}
 data Order = AskOrder BaseOrder
             |BidOrder BaseOrder
-            deriving (Show)
+            deriving (Show, Generic)
 
+instance ToJSON Order
+instance ToJSON BaseOrder
+instance ToJSON CurrencyPair
+instance ToJSON Exchange
 
-data CurrencyPair = LTCUSD | XRPUSD | ETHUSD | BCHUSD deriving (Show)
+data CurrencyPair = LTCUSD | XRPUSD | ETHUSD | BCHUSD deriving (Show, Generic)
 
-data Exchange = Bitstamp | Kraken | Binance deriving (Show)
+data Exchange = Bitstamp | Kraken | Binance deriving (Show, Generic)
 
 -- | CurrencyPairs equality is lexicographic
 instance Eq CurrencyPair where

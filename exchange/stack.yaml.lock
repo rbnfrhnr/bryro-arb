@@ -3,14 +3,7 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages:
-- completed:
-    hackage: milena-0.5.4.0@sha256:8d9f89ce25656f96b4741875ce0f9e876e6000c816d2c5ad0244fec2d627996e,2587
-    pantry-tree:
-      size: 561
-      sha256: 0ad925632f651ce85af5cacff7ab8ca4dbf85986de79eb6b6eb8522fb7635639
-  original:
-    hackage: milena-0.5.4.0@sha256:8d9f89ce25656f96b4741875ce0f9e876e6000c816d2c5ad0244fec2d627996e,2587
+packages: []
 snapshots:
 - completed:
     size: 524799
