@@ -58,8 +58,3 @@ matrix:
       script: rsync -r --delete-after --quiet $TRAVIS_BUILD_DIR/price-feed/.stack-work/dist/x86_64-linux/Cabal-2.4.0.1/build/price-feed-exe/price-feed-exe $DEPLOY_USER@$DEPLOY_HOST
       on:
         branch: master
-/home/robin/Documents/bryro_arb/price-feed/:
-  stack-work/dist/x86_64-linux/Cabal-2:
-    4:
-      0:
-        1/build/price-feed-exe:
