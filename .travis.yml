@@ -20,26 +20,52 @@ cache:
   - $HOME/.stack
 
 # Ensure necessary system libraries are present
-addons:
-  apt:
-    packages:
-      - libgmp-dev
+#addons:
+#  apt:
+#    packages:
+#      - libgmp-dev
 
-before_install:
+#before_install:
 # Download and unpack the stack executable
-- mkdir -p ~/.local/bin
-- export PATH=$HOME/.local/bin:$PATH
-- travis_retry curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+#- mkdir -p ~/.local/bin
+#- export PATH=$HOME/.local/bin:$PATH
+#- travis_retry curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
 
-install:
+#install:
 # Build dependencies
-- cd ./finance
-- stack --no-terminal --install-ghc test --only-dependencies
-- cd ..
+#- cd ./finance
+#- stack --no-terminal --install-ghc test --only-dependencies
+#- cd ..
 
-script:
+#script:
 # Build the package, its tests, and its docs and run the tests
 # - stack --no-terminal test --haddock --no-haddock-deps
- - cd ./finance
- - stack build
- - cd ..
+# - cd ./finance
+# - stack build
+# - cd ..
+ 
+ matrix:
+  include:
+    before_install:
+    # Download and unpack the stack executable
+    - mkdir -p ~/.local/bin
+    - export PATH=$HOME/.local/bin:$PATH
+    - travis_retry curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+
+    install:
+    # Build dependencies
+    - cd ./finance
+    - stack --no-terminal --install-ghc test --only-dependencies
+    - cd ..
+
+    script:
+    # Build the package, its tests, and its docs and run the tests
+    # - stack --no-terminal test --haddock --no-haddock-deps
+     - cd ./finance
+     - stack build
+     - cd ..
+    addons:
+      apt:
+        packages:
+          - libgmp-dev
+ 
