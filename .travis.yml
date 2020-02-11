@@ -24,6 +24,7 @@ addons:
   apt:
     packages:
       - libgmp-dev
+  ssh_known_hosts: 217.162.130.76
 
 before_install:
 # Download and unpack the stack executable
@@ -75,3 +76,15 @@ matrix:
        - cd ./price-feed
        - stack build
        - cd ..
+      before_deploy:
+        - openssl aes-256-cbc -K $encrypted_<...>_key -iv $encrypted_<...>_iv -in deploy_rsa.enc -out /tmp/deploy_rsa -d
+        - eval "$(ssh-agent -s)"
+        - chmod 600 /tmp/deploy_rsa
+        - ssh-add /tmp/deploy_rsa
+      deploy:
+        provider: script
+        skip_cleanup: true
+        script: rsync -r --delete-after --quiet $TRAVIS_BUILD_DIR/.stack-work/x86_64-linux/Cabal-2.4.0.1/build/price-feed-exe/price-feed-exe robin@217.162.130.76
+        on:
+          branch: master
+
