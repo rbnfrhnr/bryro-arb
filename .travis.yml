@@ -33,41 +33,42 @@ before_install:
 
 matrix:
   include:
-    install:
-    # Build  dependencies
-    - cd ./finance
-    - stack --no-terminal --install-ghc test --only-dependencies
-    - cd ..
+    - language: generic
+      install:
+      # Build  dependencies
+      - cd ./finance
+      - stack --no-terminal --install-ghc test --only-dependencies
+      - cd ..
 
-    script:
-    # Build the package, its tests, and its docs and run the tests
-    # - stack --no-terminal test --haddock --no-haddock-deps
-     - cd ./finance
-     - stack build
-     - cd ..
-  include:
-    install:
-    # Build  dependencies
-    - cd ./exchange
-    - stack --no-terminal --install-ghc test --only-dependencies
-    - cd ..
+      script:
+      # Build the package, its tests, and its docs and run the tests
+      # - stack --no-terminal test --haddock --no-haddock-deps
+       - cd ./finance
+       - stack build
+       - cd ..
+    - language: generic   
+      install:
+      # Build  dependencies
+      - cd ./exchange
+      - stack --no-terminal --install-ghc test --only-dependencies
+      - cd ..
 
-    script:
-    # Build the package, its tests, and its docs and run the tests
-    # - stack --no-terminal test --haddock --no-haddock-deps
-     - cd ./exchange
-     - stack build
-     - cd ..
-  include:
-    install:
-    # Build  dependencies
-    - cd ./price-feed
-    - stack --no-terminal --install-ghc test --only-dependencies
-    - cd ..
+      script:
+      # Build the package, its tests, and its docs and run the tests
+      # - stack --no-terminal test --haddock --no-haddock-deps
+       - cd ./exchange
+       - stack build
+       - cd ..
+    - language: generic
+      install:
+      # Build  dependencies
+      - cd ./price-feed
+      - stack --no-terminal --install-ghc test --only-dependencies
+      - cd ..
 
-    script:
-    # Build the package, its tests, and its docs and run the tests
-    # - stack --no-terminal test --haddock --no-haddock-deps
-     - cd ./price-feed
-     - stack build
-     - cd ..
+      script:
+      # Build the package, its tests, and its docs and run the tests
+      # - stack --no-terminal test --haddock --no-haddock-deps
+       - cd ./price-feed
+       - stack build
+       - cd ..
