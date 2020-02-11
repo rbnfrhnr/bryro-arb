@@ -34,6 +34,7 @@ before_install:
 matrix:
   include:
     - language: generic
+      name: Finance Module
       install:
       # Build  dependencies
       - cd ./finance
@@ -46,7 +47,8 @@ matrix:
        - cd ./finance
        - stack build
        - cd ..
-    - language: generic   
+    - language: generic
+      name: Exchange Module
       install:
       # Build  dependencies
       - cd ./exchange
@@ -60,6 +62,7 @@ matrix:
        - stack build
        - cd ..
     - language: generic
+      name: Price Feed
       install:
       # Build  dependencies
       - cd ./price-feed
