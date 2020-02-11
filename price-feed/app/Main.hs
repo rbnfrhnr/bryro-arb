@@ -36,20 +36,15 @@ main = do
        Binance.subscribeToDepthBook orderQueue
        Kraken.subscribeToDepthBook orderQueue
 
-       let topic = "price-feed"
-           run = runKafka $ mkKafkaState "price-feed-client" ("localhost", 9092)
---           byteMessages = fmap (TopicAndMessage topic . makeMessage)
---             requireAllAcks = do
---               stateRequiredAcks .= -1
---               stateWaitSize .= 1
---               stateWaitTime .= 1000
+       let topic = "bryro-orders"
+           run = runKafka $ mkKafkaState "price-feed-client" ("192.168.0.108", 9092)
+           byteMessages = fmap (TopicAndMessage topic . makeMessage . BL.toStrict)
 
        let worker queue = do
                           orders <- Chan.readChan queue
                           let byteStringOrder =  BL.toStrict $ Aeson.encode orders
---                          putStrLn $ show $ Aeson.encode orders
                           putStrLn $ show byteStringOrder
-                          result <- run . produceMessages $ [TopicAndMessage topic $ makeMessage byteStringOrder]
+                          result <- run . produceMessages $ byteMessages [(Aeson.encode orders)]
                           putStrLn $ show result
                           worker queue
        worker orderQueue
