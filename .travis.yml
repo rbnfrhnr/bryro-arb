@@ -43,8 +43,8 @@ cache:
 # - cd ./finance
 # - stack build
 # - cd ..
- 
- matrix:
+
+matrix:
   include:
     before_install:
     # Download and unpack the stack executable
