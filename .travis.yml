@@ -8,13 +8,12 @@ addons:
     packages:
       - libgmp-dev
   ssh_known_hosts: 217.162.130.76
-#before_install:
+before_install:
 #  - openssl aes-256-cbc -K $encrypted_cbf4cf196fa9_key -iv $encrypted_cbf4cf196fa9_iv
 #    -in deploy_rsa.enc -out ./deploy_rsa -d
-#  - mkdir -p ~/.local/bin
-#  - export PATH=$HOME/.local/bin:$PATH
-#  - travis_retry curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar
-#    xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+  - mkdir -p ~/.local/bin
+  - export PATH=$HOME/.local/bin:$PATH
+  - travis_retry curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
 matrix:
   include:
     - language: generic
