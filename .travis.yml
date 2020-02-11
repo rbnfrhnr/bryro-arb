@@ -20,16 +20,16 @@ cache:
   - $HOME/.stack
 
 # Ensure necessary system libraries are present
-#addons:
-#  apt:
-#    packages:
-#      - libgmp-dev
+addons:
+  apt:
+    packages:
+      - libgmp-dev
 
-#before_install:
+before_install:
 # Download and unpack the stack executable
-#- mkdir -p ~/.local/bin
-#- export PATH=$HOME/.local/bin:$PATH
-#- travis_retry curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+- mkdir -p ~/.local/bin
+- export PATH=$HOME/.local/bin:$PATH
+- travis_retry curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
 
 #install:
 # Build dependencies
@@ -46,11 +46,11 @@ cache:
 
 matrix:
   include:
-    before_install:
-    # Download and unpack the stack executable
-    - mkdir -p ~/.local/bin
-    - export PATH=$HOME/.local/bin:$PATH
-    - travis_retry curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+    #before_install:
+    ## Download and unpack the stack executable
+    #- mkdir -p ~/.local/bin
+    #- export PATH=$HOME/.local/bin:$PATH
+    #- travis_retry curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
 
     install:
     # Build  dependencies
@@ -64,16 +64,16 @@ matrix:
      - cd ./finance
      - stack build
      - cd ..
-    addons:
-      apt:
-        packages:
-          - libgmp-dev
+    #addons:
+    #  apt:
+    #    packages:
+    #      - libgmp-dev
   include:
-    before_install:
-    # Download and unpack the stack executable
-    - mkdir -p ~/.local/bin
-    - export PATH=$HOME/.local/bin:$PATH
-    - travis_retry curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+    #before_install:
+    ## Download and unpack the stack executable
+    #- mkdir -p ~/.local/bin
+    #- export PATH=$HOME/.local/bin:$PATH
+    #- travis_retry curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
 
     install:
     # Build  dependencies
@@ -87,16 +87,16 @@ matrix:
      - cd ./exchange
      - stack build
      - cd ..
-    addons:
-      apt:
-        packages:
-          - libgmp-dev
+    #addons:
+    #  apt:
+    #    packages:
+    #      - libgmp-dev
   include:
-    before_install:
-    # Download and unpack the stack executable
-    - mkdir -p ~/.local/bin
-    - export PATH=$HOME/.local/bin:$PATH
-    - travis_retry curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+    #before_install:
+    ## Download and unpack the stack executable
+    #- mkdir -p ~/.local/bin
+    #- export PATH=$HOME/.local/bin:$PATH
+    #- travis_retry curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
 
     install:
     # Build  dependencies
@@ -110,7 +110,7 @@ matrix:
      - cd ./price-feed
      - stack build
      - cd ..
-    addons:
-      apt:
-        packages:
-          - libgmp-dev
+    #addons:
+    #  apt:
+    #    packages:
+    #      - libgmp-dev
