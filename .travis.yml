@@ -5,13 +5,19 @@ cache:
     - "$HOME/.stack"
 addons:
   ssh_known_hosts:
-  - ${DEPLOY_HOST}
+    - ${DEPLOY_HOST}
   apt:
     packages:
       - libgmp-dev
 before_install:
   #  - openssl aes-256-cbc -K $encrypted_cbf4cf196fa9_key -iv $encrypted_cbf4cf196fa9_iv
   #    -in deploy_rsa.enc -out ./deploy_rsa -d
+  - openssl aes-256-cbc -K $encrypted_cbf4cf196fa9_key -iv $encrypted_cbf4cf196fa9_iv
+    -in deploy_rsa.enc -out ./deploy_rsa -d
+  - eval "$(ssh-agent -s)"
+  - chmod 600 ./deploy_rsa
+  - ssh-add ./deploy_rsa
+  - echo -e "Host ${DEPLOY_HOST}\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
   - mkdir -p ~/.local/bin
   - export PATH=$HOME/.local/bin:$PATH
   - travis_retry curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
@@ -47,13 +53,6 @@ matrix:
         - cd ./price-feed
         - stack build
         - cd ..
-      before_deploy:
-        - openssl aes-256-cbc -K $encrypted_cbf4cf196fa9_key -iv $encrypted_cbf4cf196fa9_iv
-          -in deploy_rsa.enc -out ./deploy_rsa -d
-        - eval "$(ssh-agent -s)"
-        - chmod 600 ./deploy_rsa
-        - ssh-add ./deploy_rsa
-        - echo -e "Host ${DEPLOY_HOST}\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
       deploy:
         provider: script
         skip_cleanup: true
