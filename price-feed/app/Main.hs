@@ -39,7 +39,7 @@ main = do
        let topic = "bryro-orders"
 --           run = runKafka $ mkKafkaState "price-feed-client" ("217.162.130.76", 9092)
 --           run = runKafka $ mkKafkaState "price-feed-client" ("217.162.130.76", 9091)
-           run = runKafka $ mkKafkaState "price-feed-client" ("192.168.0.88", 9092)
+           run = runKafka $ mkKafkaState "price-feed-client" ("localhost", 9092)
            byteMessages = fmap (TopicAndMessage topic . makeMessage . BL.toStrict)
 
        let worker queue = do
