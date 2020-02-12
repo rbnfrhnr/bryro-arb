@@ -37,6 +37,7 @@ jobs:
         - stack build
         - cd ..
     - stage: Deploy
+      name: Deploy to Staging
       deploy:
         provider: script
         skip_cleanup: true
