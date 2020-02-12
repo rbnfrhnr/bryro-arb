@@ -56,6 +56,8 @@ matrix:
       provider: script
       skip_cleanup: true
       # script: rsync -r --delete-after --quiet $TRAVIS_BUILD_DIR/price-feed/.stack-work/dist/x86_64-linux/Cabal-2.4.0.1/build/price-feed-exe/price-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/Documents
-      script: scp  $TRAVIS_BUILD_DIR/price-feed/.stack-work/dist/x86_64-linux/Cabal-2.4.0.1/build/price-feed-exe/price-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents
+      script:
+      - scp  $TRAVIS_BUILD_DIR/price-feed/.stack-work/dist/x86_64-linux/Cabal-2.4.0.1/build/price-feed-exe/price-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents
+      - ssh $DEPLOY_USER@$DEPLOY_HOST "stack exec ~/Documents/price-feed-exe"
       on:
         branch: master
