@@ -54,8 +54,8 @@ jobs:
           - ssh $DEPLOY_USER@$DEPLOY_HOST " touch /home/${DEPLOY_USER}/Documents/test.txt && stack exec /home/${DEPLOY_USER}/Documents/price-feed-exe &"
         on:
           branch: master
-    - stage: Database
-      name: Database Migrations
+#    - stage: Database
+#      name: Database Migrations
 #      deploy:
 #        provider: script
 #        skip_cleanup: true
