@@ -45,12 +45,10 @@ jobs:
         script:
           - scp  ~/artifacts/price-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents
           - ssh $DEPLOY_USER@$DEPLOY_HOST " touch /home/${DEPLOY_USER}/Documents/test.txt && stack exec /home/${DEPLOY_USER}/Documents/price-feed-exe &"
-      on:
-        branch: master
+      if: branch = master
     - name: Price Feed Staging
       language: generic
-      on:
-        branch: staging
+      if: branch = staging
       cache:
         directories:
           - "$HOME/.stack"
