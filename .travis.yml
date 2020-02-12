@@ -6,6 +6,8 @@ addons:
 sudo: true
 before_install:
   - openssl aes-256-cbc -K $encrypted_cbf4cf196fa9_key -iv $encrypted_cbf4cf196fa9_iv
+    -in deploy-staging_rsa.enc -out deploy-staging_rsa -d
+  - openssl aes-256-cbc -K $encrypted_cbf4cf196fa9_key -iv $encrypted_cbf4cf196fa9_iv
     -in deploy_rsa.enc -out ./deploy_rsa -d
   - eval "$(ssh-agent -s)"
   - chmod 600 ./deploy_rsa
@@ -21,7 +23,6 @@ stages:
   - Deploy
 jobs:
   include:
-    #     PROD Build-Job
     - stage: Build Prod
       name: Price Feed
       language: generic
@@ -39,18 +40,17 @@ jobs:
       script:
         - cd ./price-feed
         - stack build
-        - mv $TRAVIS_BUILD_DIR/price-feed/.stack-work/dist/x86_64-linux/Cabal-2.4.0.1/build/price-feed-exe/price-feed-exe ~/artifacts/price-feed-exe
+        - mv $TRAVIS_BUILD_DIR/price-feed/.stack-work/dist/x86_64-linux/Cabal-2.4.0.1/build/price-feed-exe/price-feed-exe
+          ~/artifacts/price-feed-exe
         - mv ./order-feed.service ~/artifacts/order-feed.service
         - cd ..
       deploy:
         provider: script
         skip_cleanup: true
         script:
-          - scp ~/artifacts/price-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents &&
-            scp ~/artifacts/order-feed.service $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents
+          - scp ~/artifacts/price-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents
+            && scp ~/artifacts/order-feed.service $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents
       if: branch = master
-
-    #     STAGING Build-Job
     - name: Price Feed Staging
       language: generic
       if: branch = staging
@@ -68,18 +68,12 @@ jobs:
       script:
         - cd ./price-feed
         - stack build
-        - mv $TRAVIS_BUILD_DIR/price-feed/.stack-work/dist/x86_64-linux/Cabal-2.4.0.1/build/price-feed-exe/price-feed-exe ~/artifacts/price-feed-exe
+        - mv $TRAVIS_BUILD_DIR/price-feed/.stack-work/dist/x86_64-linux/Cabal-2.4.0.1/build/price-feed-exe/price-feed-exe
+          ~/artifacts/price-feed-exe
         - cd ..
       deploy:
         provider: script
         skip_cleanup: true
         script:
-          - scp -p 23 ~/artifacts/price-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents &&
-            scp -p 23 ~/artifacts/order-feed.service $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents
-#    - stage: Database
-#      name: Database Migrations
-#      script:
-#       - scp  ~/shared/price-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents
-#       - ssh $DEPLOY_USER@$DEPLOY_HOST " touch /home/${DEPLOY_USER}/Documents/test.txt && stack exec /home/${DEPLOY_USER}/Documents/price-feed-exe &"
-#       on:
-#          branch: master
+          - scp -p 23 ~/artifacts/price-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents
+            && scp -p 23 ~/artifacts/order-feed.service $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents
