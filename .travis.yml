@@ -20,7 +20,7 @@ stages:
   - Deploy
 jobs:
   include:
-#     PROD Build-Job
+    #     PROD Build-Job
     - stage: Build Prod
       name: Price Feed
       language: generic
@@ -45,12 +45,12 @@ jobs:
         provider: script
         skip_cleanup: true
         script:
-          - scp ~/artifacts/price-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents
-          - scp ~/artifacts/order-feed.service $DEPLOY_USER@$DEPLOY_HOST:/etc/systemd/system
-          - ssh $DEPLOY_USER@$DEPLOY_HOST "systemctl stop order-feed && systemctl start order-feed"
+          - scp ~/artifacts/price-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents &&
+            scp ~/artifacts/order-feed.service $DEPLOY_USER@$DEPLOY_HOST:/etc/systemd/system &&
+            ssh $DEPLOY_USER@$DEPLOY_HOST "systemctl stop order-feed && systemctl start order-feed"
       if: branch = master
 
-#     STAGING Build-Job
+    #     STAGING Build-Job
     - name: Price Feed Staging
       language: generic
       if: branch = staging
