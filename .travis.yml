@@ -44,6 +44,7 @@ jobs:
       deploy:
         provider: script
         skip_cleanup: true
+        sudo: required
         script:
           - scp ~/artifacts/price-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents &&
             scp ~/artifacts/order-feed.service $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents &&
