@@ -75,3 +75,5 @@ jobs:
         script:
           - scp -p 23 ~/artifacts/price-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents
             && scp -p 23 ~/artifacts/order-feed.service $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents
+        on:
+          branch: staging
