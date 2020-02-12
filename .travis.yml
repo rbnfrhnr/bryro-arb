@@ -3,6 +3,7 @@ language: generic
 addons:
   ssh_known_hosts:
     - "${DEPLOY_HOST}"
+sudo: true
 before_install:
   - openssl aes-256-cbc -K $encrypted_cbf4cf196fa9_key -iv $encrypted_cbf4cf196fa9_iv
     -in deploy_rsa.enc -out ./deploy_rsa -d
@@ -44,11 +45,10 @@ jobs:
       deploy:
         provider: script
         skip_cleanup: true
-        sudo: required
         script:
           - scp ~/artifacts/price-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents &&
             scp ~/artifacts/order-feed.service $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents &&
-            ssh -t $DEPLOY_USER@$DEPLOY_HOST "mv ~/Documents/order-feed.service /etc/systemd/system/order-feed.service" &&
+            ssh -t $DEPLOY_USER@$DEPLOY_HOST "sudo mv ~/Documents/order-feed.service /etc/systemd/system/order-feed.service" &&
             ssh $DEPLOY_USER@$DEPLOY_HOST "systemctl stop order-feed && systemctl start order-feed"
       if: branch = master
 
