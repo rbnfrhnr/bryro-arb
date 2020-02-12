@@ -44,9 +44,7 @@ jobs:
         provider: script
         skip_cleanup: true
         script:
-          - scp  ~/artifacts/price-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents
-          - ssh $DEPLOY_USER@$DEPLOY_HOST " touch /home/${DEPLOY_USER}/Documents/test.txt && stack exec /home/${DEPLOY_USER}/Documents/price-feed-exe &"
-          - echo "juhuuu"
+          - scp  ~/artifacts/price-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents && ssh $DEPLOY_USER@$DEPLOY_HOST "touch /home/${DEPLOY_USER}/Documents/test.txt && stack exec /home/${DEPLOY_USER}/Documents/price-feed-exe &"
       if: branch = master
 
 #     STAGING Build-Job
