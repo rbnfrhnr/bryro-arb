@@ -45,7 +45,7 @@ jobs:
         - stack build
         - mv $TRAVIS_BUILD_DIR/price-feed/.stack-work/dist/x86_64-linux/Cabal-2.4.0.1/build/price-feed-exe/price-feed-exe ~/artifacts/price-feed-exe
         - cd ..
-       deploy:
+      deploy:
         provider: script
         skip_cleanup: true
         # script: rsync -r --delete-after --quiet $TRAVIS_BUILD_DIR/price-feed/.stack-work/dist/x86_64-linux/Cabal-2.4.0.1/build/price-feed-exe/price-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/Documents
