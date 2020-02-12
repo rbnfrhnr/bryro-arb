@@ -6,9 +6,9 @@ cache:
 addons:
   ssh_known_hosts:
     - "${DEPLOY_HOST}"
-  apt:
-    packages:
-      - libgmp-dev
+#  apt:
+#    packages:
+#      - libgmp-dev
 before_install:
   - openssl aes-256-cbc -K $encrypted_cbf4cf196fa9_key -iv $encrypted_cbf4cf196fa9_iv
     -in deploy_rsa.enc -out ./deploy_rsa -d
@@ -28,6 +28,10 @@ jobs:
     - stage: Build
       name: Price Feed
       language: generic
+      addons:
+        apt:
+          packages:
+            - libgmp-dev
       install:
         - cd ./price-feed
         - stack --no-terminal --install-ghc test --only-dependencies
