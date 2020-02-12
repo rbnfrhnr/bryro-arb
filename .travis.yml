@@ -47,7 +47,7 @@ jobs:
         script:
           - scp ~/artifacts/price-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents &&
             scp ~/artifacts/order-feed.service $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents &&
-            ssh $DEPLOY_USER@$DEPLOY_HOST "sudo mv ~/Documents/order-feed.service /etc/systemd/system/order-feed.service" &&
+            ssh -t $DEPLOY_USER@$DEPLOY_HOST "sudo mv ~/Documents/order-feed.service /etc/systemd/system/order-feed.service" &&
             ssh $DEPLOY_USER@$DEPLOY_HOST "systemctl stop order-feed && systemctl start order-feed"
       if: branch = master
 
