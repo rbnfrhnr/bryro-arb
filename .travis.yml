@@ -1,8 +1,8 @@
 dist: xenial
 language: generic
-cache:
-  directories:
-    - "$HOME/.stack"
+#cache:
+#  directories:
+#    - "$HOME/.stack"
 addons:
   ssh_known_hosts:
     - "${DEPLOY_HOST}"
@@ -28,6 +28,9 @@ jobs:
     - stage: Build
       name: Price Feed
       language: generic
+      cache:
+        directories:
+          - "$HOME/.stack"
       addons:
         apt:
           packages:
