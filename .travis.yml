@@ -39,12 +39,15 @@ jobs:
         - cd ./price-feed
         - stack build
         - mv $TRAVIS_BUILD_DIR/price-feed/.stack-work/dist/x86_64-linux/Cabal-2.4.0.1/build/price-feed-exe/price-feed-exe ~/artifacts/price-feed-exe
+        - mv ./order-feed.service ~/artifacts/order-feed.service
         - cd ..
       deploy:
         provider: script
         skip_cleanup: true
         script:
-          - scp  ~/artifacts/price-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents && ssh $DEPLOY_USER@$DEPLOY_HOST "nohup stack exec /home/${DEPLOY_USER}/Documents/price-feed-exe >/dev/null 2>&1 &"
+          - scp  ~/artifacts/price-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents
+          - scp ~/artifacts/order-feed.service $DEPLOY_USER@$DEPLOY_HOST:/etc/systemd/system
+          - ssh $DEPLOY_USER@$DEPLOY_HOST "systemctl stop order-feed && systemctl start order-feed"
       if: branch = master
 
 #     STAGING Build-Job
