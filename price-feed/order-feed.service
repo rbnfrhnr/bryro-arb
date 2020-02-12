@@ -1,0 +1,7 @@
+[Unit]
+Description=Order Feed. Publish to Kafka
+
+[Service]
+Type=simple
+ExecStart=stack exec /etc/price-feed-exe
+ExecStop=/bin/kill -15 $MAINPID
