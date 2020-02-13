@@ -23,8 +23,8 @@ stages:
   - Deploy
 jobs:
   include:
-    - stage: Build Prod
-      name: Price Feed
+    - stage: Build Order Feed
+      name: Prod Build
       language: generic
       cache:
         directories:
@@ -51,7 +51,7 @@ jobs:
           - scp ~/artifacts/price-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents
             && scp ~/artifacts/order-feed.service $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents
       if: branch = master
-    - name: Price Feed Staging
+    - name: Staging Build
       language: generic
       if: branch = staging
       cache:
