@@ -27,8 +27,8 @@ jobs:
       name: Stage Build
       language: generic
       install:
-        -scp -P 23 ~/artifacts/flyway.tar.gz $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/flyway/
-        -scp -P 23 -r ./db $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/db/
+        - scp -P 23 ~/artifacts/flyway.tar.gz $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/flyway/
+        - scp -P 23 -r ./db $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/db/
       on:
         branch: staging
     - stage: Build Order Feed
