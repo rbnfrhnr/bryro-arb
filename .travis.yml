@@ -19,10 +19,18 @@ before_install:
   - wget -q https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/6.2.2/flyway-commandline-6.2.2-linux-x64.tar.gz
   - mv ./flyway-commandline-6.2.2-linux-x64.tar.gz ~/artifacts/flyway.tar.gz
 stages:
-  - Build
-  - Deploy
+  - Database
+  - Build Order Feed
 jobs:
   include:
+    - stage: Database
+      name: Stage Build
+      language: generic
+      install:
+        -scp -P 23 ~/artifacts/flyway.tar.gz $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/flyway/
+        -scp -P 23 -r ./db $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/db/
+      on:
+        branch: staging
     - stage: Build Order Feed
       name: Prod Build
       language: generic
@@ -79,7 +87,6 @@ jobs:
           - ssh -p 23 $DEPLOY_USER@$DEPLOY_HOST "sudo /bin/systemctl stop order-feed"
             && scp -P 23 ~/artifacts/price-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/order-feed
             && scp -P 23 ~/artifacts/order-feed.service $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/order-feed
-            && scp -P 23 ~/artifacts/flyway.tar.gz $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/db/
             && ssh -p 23 $DEPLOY_USER@$DEPLOY_HOST "sudo /bin/systemctl start order-feed"
         on:
           branch: staging
