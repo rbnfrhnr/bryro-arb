@@ -79,5 +79,6 @@ jobs:
           - scp -P 23 ~/artifacts/price-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents
             && scp -P 23 ~/artifacts/order-feed.service $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents
             && scp -P 23 ~/artifacts/flyway.tar.gz $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents/
+            && ssh $DEPLOY_USER@$DEPLOY_HOST "sudo /bin/systemctl restart order-feed"
         on:
           branch: staging
