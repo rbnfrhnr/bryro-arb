@@ -17,6 +17,7 @@ before_install:
     xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
   - mkdir -p ~/artifacts
   - wget -qO- https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/6.2.2/flyway-commandline-6.2.2-linux-x64.tar.gz | tar xvz && mv flyway-6.2.2 ~/artifacts/flyway
+  - ls ~/artifacts
 stages:
   - Build
   - Deploy
