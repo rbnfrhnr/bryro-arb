@@ -31,6 +31,7 @@ import Network.Kafka.Protocol (ProduceResponse(..),
 
 main :: IO ()
 main = do
+       putStrLn "Started order-feed"
        orderQueue <- newChan
        Bitstamp.subscribeToDepthBook orderQueue
        Binance.subscribeToDepthBook orderQueue
@@ -45,7 +46,6 @@ main = do
        let worker queue = do
                           orders <- Chan.readChan queue
                           let byteStringOrder =  BL.toStrict $ Aeson.encode orders
-                          putStrLn $ show byteStringOrder
                           result <- run . produceMessages $ byteMessages [(Aeson.encode orders)]
                           worker queue
        worker orderQueue
