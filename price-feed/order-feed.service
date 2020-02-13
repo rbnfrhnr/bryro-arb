@@ -3,6 +3,6 @@ Description=Order Feed. Publish to Kafka
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/stack exec /home/robin/Documents/price-feed-exe
+ExecStart=/usr/local/bin/stack exec /home/robin/order-feed/price-feed-exe
 ExecStop=/bin/kill -15 $MAINPID
 Environment="HOME=/"
