@@ -47,7 +47,6 @@ main = do
                           let byteStringOrder =  BL.toStrict $ Aeson.encode orders
                           putStrLn $ show byteStringOrder
                           result <- run . produceMessages $ byteMessages [(Aeson.encode orders)]
-                          putStrLn $ show result
                           worker queue
        worker orderQueue
 
