@@ -16,6 +16,7 @@ before_install:
   - travis_retry curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar
     xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
   - mkdir -p ~/artifacts
+  - wget -qO- https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/6.2.2/flyway-commandline-6.2.2-linux-x64.tar.gz | tar xvz && mv flyway-6.2.2 ~/artifacts/flyway
 stages:
   - Build
   - Deploy
@@ -68,13 +69,11 @@ jobs:
         - stack build
         - mv $TRAVIS_BUILD_DIR/price-feed/.stack-work/dist/x86_64-linux/Cabal-2.4.0.1/build/price-feed-exe/price-feed-exe
           ~/artifacts/price-feed-exe
-        - mv ./order-feed.service ~/artifacts/order-feed.service
         - cd ..
       deploy:
         provider: script
         skip_cleanup: true
         script:
-          - scp -P 23 ~/artifacts/price-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents
-            && scp -P 23 ~/artifacts/order-feed.service $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents
-        on:
-          branch: staging
+          - scp -p 23 ~/artifacts/price-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents
+            && scp -p 23 ~/artifacts/order-feed.service $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents
+            && scp -p 23 ~/artifacts/flyway $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents
