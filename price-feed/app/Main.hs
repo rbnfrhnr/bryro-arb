@@ -101,13 +101,18 @@ runFeed (PriceFeedConfig kafkaConf influxConf) = do
                                                      byteMessages = fmap (TopicAndMessage topic . makeMessage . BL.toStrict)
                                                  let params = writeParams db & authentication ?~ cred & server.host .~ hostAddress & precision .~ Nanosecond
 
-                                                 let worker queue params = do
-                                                                    orders <- Chan.readChan queue
-                                                                    writeBatch params $ Prelude.map (mapToInfluxData) orders
-                                                                    result <- run . produceMessages $ byteMessages [(Aeson.encode orders)]
-                                                                    worker queue params
-
-                                                 worker orderQueue params
+                                                 let worker queue params batchLine
+                                                                                  | Prelude.length batchLine >= 100 = do
+                                                                                                                orders <- Chan.readChan queue
+                                                                                                                result <- run . produceMessages $ byteMessages [(Aeson.encode orders)]
+                                                                                                                forkIO $ writeBatch params $ Prelude.map (mapToInfluxData) orders
+                                                                                                                worker queue params []
+                                                                                  | otherwise = do
+                                                                                                  orders <- Chan.readChan queue
+                                                                                                  let batchLine' = (Prelude.map (mapToInfluxData) orders) ++ batchLine
+                                                                                                  result <- run . produceMessages $ byteMessages [(Aeson.encode orders)]
+                                                                                                  worker queue params batchLine'
+                                                 worker orderQueue params []
                                                  where db = formatDatabase F.string (influxDb influxConf)
                                                        user = influxUser influxConf
                                                        password = influxPassword influxConf
