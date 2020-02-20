@@ -83,7 +83,7 @@ main :: IO ()
 main = do
        mb <- try $ load (configFile "config.cfg")
        case mb of
-           Left (err :: SomeException) -> Prelude.putStrLn "e"
+           Left (err :: SomeException) -> Prelude.putStrLn $ show err
            Right cfg -> do
                           appConfig <- createConfig cfg
                           runFeed appConfig
