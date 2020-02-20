@@ -15,8 +15,7 @@ before_install:
   - export PATH=$HOME/.local/bin:$PATH
   - travis_retry curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar
     xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
-  - echo "${ALLOW_NEW}" >> $HOME/.stack/config.yaml
-  - cat $HOME/.stack/config.yaml
+  - mv -f ./config.yaml $HOME/.stack/config.yaml
   - mkdir -p ~/artifacts
   - wget -q https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/6.2.2/flyway-commandline-6.2.2-linux-x64.tar.gz
   - mv ./flyway-commandline-6.2.2-linux-x64.tar.gz ~/artifacts/flyway.tar.gz
