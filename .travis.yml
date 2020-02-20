@@ -31,7 +31,7 @@ jobs:
         - scp -P 23 -r ./db $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/
       script:
         - ssh -p 23 $DEPLOY_USER@$DEPLOY_HOST "tar zxf /home/${DEPLOY_USER}/flyway/flyway.tar.gz"
-        - ssh -p 23 $DEPLOY_USER@$DEPLOY_HOST "/home/${DEPLOY_USER}/flyway/flyway-6.2.2/flyway migrate -configFiles=/home/${DEPLOY_USER}/db/conf/flyway.conf -password=${FLYWAY_PASSWORD} -locations=filesystem:/home/${DEPLOY_USER}/db/sql/migrations"
+        - ssh -p 23 $DEPLOY_USER@$DEPLOY_HOST "cd /home/${DEPLOY_USER} && ./flyway/flyway-6.2.2/flyway migrate -configFiles=./db/conf/flyway.conf -password=${FLYWAY_PASSWORD}"
         - echo "done"
       on:
         branch: staging
