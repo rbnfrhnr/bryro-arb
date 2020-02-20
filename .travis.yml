@@ -23,18 +23,6 @@ stages:
   - Build Order Feed
 jobs:
   include:
-    - stage: Database
-      name: Stage Build
-      language: generic
-      install:
-        - scp -P 23 ~/artifacts/flyway.tar.gz $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/flyway/
-        - scp -P 23 -r ./db $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/
-      script:
-        - ssh -p 23 $DEPLOY_USER@$DEPLOY_HOST "tar zxf /home/${DEPLOY_USER}/flyway/flyway.tar.gz"
-        - ssh -p 23 $DEPLOY_USER@$DEPLOY_HOST "cd /home/${DEPLOY_USER} && ./flyway/flyway-6.2.2/flyway migrate -configFiles=./db/conf/flyway.conf -password=${FLYWAY_PASSWORD}"
-        - echo "done"
-      on:
-        branch: staging
     - stage: Build Order Feed
       name: Prod Build
       language: generic
