@@ -46,7 +46,7 @@ instance ToJSON BitstampMessage
 
 instance ExchangeOrder BitstampMessage where
   toOrder message = (map (\(price:qty:[]) -> AskOrder (BaseOrder Bitstamp currencyPair price qty msgTimestamp)) asksArray) ++ (map (\(price:qty:[]) -> BidOrder (BaseOrder Bitstamp currencyPair price qty msgTimestamp)) bidsArray)
-                where msgTimestamp = timestamp (msg message)
+                where msgTimestamp = microtimestamp (msg message)
                       currencyPair = getCurrencyPairFromMessage message
                       asksArray    = asks (msg message)
                       bidsArray    = bids (msg message)
