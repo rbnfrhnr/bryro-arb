@@ -14,32 +14,37 @@ data FeeTable = BitstampFeeTable | BinanceFeeTable deriving Show
 
 main :: IO ()
 main = do
-       bitstampFees <- newEmptyMVar
-       binanceFees <- newEmptyMVar
-       Bitstamp.subscribeToFees bitstampFees
-       Binance.subscribeToFees binanceFees
+       putStrLn "hey"
+       Bitstamp.subscribe2
 
-       orderQueue <- newChan
-       Bitstamp.subscribeToDepthBook orderQueue
-       Binance.subscribeToDepthBook orderQueue
-       Kraken.subscribeToDepthBook orderQueue
-
-       forkIO  $ worker orderQueue
-       forkIO $ feesWorker bitstampFees
-       feesWorker binanceFees
+       loop
+--       bitstampFees <- newEmptyMVar
+--       binanceFees <- newEmptyMVar
+--       Bitstamp.subscribeToFees bitstampFees
+--       Binance.subscribeToFees binanceFees
+--
+--       orderQueue <- newChan
+--       Bitstamp.subscribeToDepthBook orderQueue
+--       Binance.subscribeToDepthBook orderQueue
+--       Kraken.subscribeToDepthBook orderQueue
+--
+--       forkIO  $ worker orderQueue
+--       forkIO $ feesWorker bitstampFees
+--       feesWorker binanceFees
        return ()
+       where loop = do loop
 
-feesWorker :: (Show a, Fee a) => MVar.MVar a -> IO ()
-feesWorker feesHolder = loop
-          where loop = do
-                       fees <- MVar.readMVar feesHolder
-                       putStrLn $ show fees
-                       threadDelay 5000000
-                       loop
-
-worker :: Chan [Order] -> IO ()
-worker queue = loop
-          where loop = do
-                        orders <- Chan.readChan queue
+--feesWorker :: (Show a, Fee a) => MVar.MVar a -> IO ()
+--feesWorker feesHolder = loop
+--          where loop = do
+--                       fees <- MVar.readMVar feesHolder
+--                       putStrLn $ show fees
+--                       threadDelay 5000000
+--                       loop
+--
+--worker :: Chan [Order] -> IO ()
+--worker queue = loop
+--          where loop = do
+--                        orders <- Chan.readChan queue
 --                        putStrLn $ show orders
-                        loop
+--                        loop
