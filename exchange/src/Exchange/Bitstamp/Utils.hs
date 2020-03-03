@@ -1,6 +1,7 @@
 module Exchange.Bitstamp.Utils (
        subscribeToDepthBook
       ,subscribeToFees
+      ,subscribe2
 ) where
 
 import qualified Control.Concurrent.Chan as C
@@ -9,6 +10,7 @@ import qualified Data.Aeson as Aeson
 import qualified Data.ByteString.Internal as B
 import qualified Exchange.Network.Socket as Socket
 import qualified Exchange.Bitstamp.Secured as BitstampSecure
+import Exchange.Bitstamp.Contract.Websocket as BWS
 import Control.Concurrent
 import Finance.Types
 import Exchange.Bitstamp.Decoder
@@ -22,6 +24,9 @@ websocketHost = "ws.bitstamp.net"
 {- | Websocket worker which receives the order-book updates-}
 subscribeToDepthBook :: C.Chan [Order] -> IO ()
 subscribeToDepthBook queue = Socket.runSecureClient websocketHost "/" 443 (\byteStringMsg -> C.writeChan queue $ toOrder (Aeson.decode byteStringMsg :: Maybe BitstampMessage)) subscribe
+
+subscribe2 :: IO ()
+subscribe2 = Socket.runSecureClient websocketHost "/" 443 (\byteStringMsg -> putStrLn ( show (Aeson.decode byteStringMsg :: Maybe BWS.Message))) subscribe
 
 {- | Small worker which fetches the current applicable fees in a given interval -}
 subscribeToFees :: MVar.MVar BitstampFeeTable -> IO ()
