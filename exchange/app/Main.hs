@@ -17,7 +17,6 @@ main = do
        putStrLn "hey"
        Bitstamp.subscribe2
 
-       loop
 --       bitstampFees <- newEmptyMVar
 --       binanceFees <- newEmptyMVar
 --       Bitstamp.subscribeToFees bitstampFees
@@ -31,8 +30,6 @@ main = do
 --       forkIO  $ worker orderQueue
 --       forkIO $ feesWorker bitstampFees
 --       feesWorker binanceFees
-       return ()
-       where loop = do loop
 
 --feesWorker :: (Show a, Fee a) => MVar.MVar a -> IO ()
 --feesWorker feesHolder = loop

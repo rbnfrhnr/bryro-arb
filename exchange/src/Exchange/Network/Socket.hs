@@ -2,6 +2,7 @@ module Exchange.Network.Socket (
   runSecureClient
 ) where
 
+import qualified Control.Exception as E
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Lazy.Internal as B
@@ -23,7 +24,8 @@ runSecureClient host path port onMessage onOpen = do
 
     onOpen newCon
 
-    forkIO $ worker newCon onMessage
+    worker newCon onMessage
+--    forkIO $ worker newCon onMessage
     return ()
 
 
@@ -31,9 +33,12 @@ runSecureClient host path port onMessage onOpen = do
 worker :: W.Connection -> (B.ByteString -> IO ()) -> IO ()
 worker connection onMessage = loop
                     where loop = do
-                                   msg <- WS.receiveData connection
-                                   onMessage (msg :: B.ByteString)
-                                   loop
+                                 result <- E.try ( WS.receiveDataMessage connection) :: IO (Either W.ConnectionException W.DataMessage)
+                                 case result of
+                                    Left ex -> putStrLn $ "Exception in Websocket connection " ++ (show ex)
+                                    Right (W.Binary val) -> onMessage (val)
+                                    Right (W.Text val1 val2) -> onMessage val1
+                                 loop
 
 
 
