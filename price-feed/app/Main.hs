@@ -102,7 +102,7 @@ runFeed (PriceFeedConfig kafkaConf influxConf) = do
                                                  let params = writeParams db & authentication ?~ cred & server.host .~ hostAddress & precision .~ Nanosecond
 
                                                  let worker queue params batchLine
-                                                                                  | Prelude.length batchLine >= 100 = do
+                                                                                  | Prelude.length batchLine >= 750 = do
                                                                                                                       orders <- Chan.readChan queue
                                                                                                                       result <- run . produceMessages $ byteMessages [(Aeson.encode orders)]
                                                                                                                       forkIO $ writeBatch params batchLine
