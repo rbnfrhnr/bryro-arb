@@ -24,8 +24,7 @@ runSecureClient host path port onMessage onOpen = do
 
     onOpen newCon
 
-    worker newCon onMessage
---    forkIO $ worker newCon onMessage
+    forkIO $ worker newCon onMessage
     return ()
 
 
