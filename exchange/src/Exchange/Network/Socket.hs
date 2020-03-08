@@ -15,7 +15,7 @@ import Control.Concurrent
 
 
 {- endpoint, port, queue, function applied at con open -}
-runSecureClient :: String -> String-> S.PortNumber -> (B.ByteString -> IO ()) -> (W.Connection -> IO ()) -> IO ()
+runSecureClient :: String -> String-> S.PortNumber -> (BL.ByteString -> IO ()) -> (W.Connection -> IO ()) -> IO ()
 runSecureClient host path port onMessage onOpen = do
     context <- C.initConnectionContext
     connection <- C.connectTo context (connectionParams host port)
@@ -29,14 +29,14 @@ runSecureClient host path port onMessage onOpen = do
 
 
 
-worker :: W.Connection -> (B.ByteString -> IO ()) -> IO ()
+worker :: W.Connection -> (BL.ByteString -> IO ()) -> IO ()
 worker connection onMessage = loop
                     where loop = do
                                  result <- E.try ( WS.receiveDataMessage connection) :: IO (Either W.ConnectionException W.DataMessage)
                                  case result of
                                     Left ex -> putStrLn $ "Exception in Websocket connection " ++ (show ex)
-                                    Right (W.Binary val) -> onMessage (val)
-                                    Right (W.Text val1 val2) -> onMessage val1
+                                    Right (W.Binary val) -> onMessage val
+                                    Right (W.Text val1 val2) -> onMessage  val1
                                  loop
 
 

@@ -14,20 +14,21 @@ data FeeTable = BitstampFeeTable | BinanceFeeTable deriving Show
 
 main :: IO ()
 main = do
+--       orderQueue <- newChan
        putStrLn "hey"
-       Bitstamp.subscribe2
+--       Bitstamp.subscribe2 orderQueue
 
 --       bitstampFees <- newEmptyMVar
 --       binanceFees <- newEmptyMVar
 --       Bitstamp.subscribeToFees bitstampFees
 --       Binance.subscribeToFees binanceFees
 --
---       orderQueue <- newChan
---       Bitstamp.subscribeToDepthBook orderQueue
---       Binance.subscribeToDepthBook orderQueue
---       Kraken.subscribeToDepthBook orderQueue
+       orderQueue <- newChan
+       Bitstamp.subscribeToDepthBook orderQueue
+       Binance.subscribeToDepthBook orderQueue
+       Kraken.subscribeToDepthBook orderQueue
 --
---       forkIO  $ worker orderQueue
+       worker orderQueue
 --       forkIO $ feesWorker bitstampFees
 --       feesWorker binanceFees
 
@@ -39,9 +40,9 @@ main = do
 --                       threadDelay 5000000
 --                       loop
 --
---worker :: Chan [Order] -> IO ()
---worker queue = loop
---          where loop = do
---                        orders <- Chan.readChan queue
---                        putStrLn $ show orders
---                        loop
+worker :: Chan [Order] -> IO ()
+worker queue = loop
+          where loop = do
+                        orders <- Chan.readChan queue
+                        putStrLn $ show orders
+                        loop

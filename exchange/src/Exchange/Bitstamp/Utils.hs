@@ -1,19 +1,18 @@
 module Exchange.Bitstamp.Utils (
-       subscribeToDepthBook
-      ,subscribeToFees
-      ,subscribe2
+       subscribeToFees
+      ,subscribeToDepthBook
 ) where
 
 import qualified Control.Concurrent.Chan as C
 import qualified Control.Concurrent.MVar as MVar
 import qualified Data.Aeson as Aeson
 import qualified Data.ByteString.Internal as B
+import qualified Data.ByteString.Lazy as BL
 import qualified Exchange.Network.Socket as Socket
 import qualified Exchange.Bitstamp.Secured as BitstampSecure
 import Exchange.Bitstamp.Contract.Websocket as BWS
 import Control.Concurrent
 import Finance.Types
-import Exchange.Bitstamp.Decoder
 import Exchange.Bitstamp.Types
 import Network.WebSockets
 import Exchange.Types
@@ -21,12 +20,13 @@ import Exchange.Types
 websocketHost :: String
 websocketHost = "ws.bitstamp.net"
 
-{- | Websocket worker which receives the order-book updates-}
 subscribeToDepthBook :: C.Chan [Order] -> IO ()
-subscribeToDepthBook queue = Socket.runSecureClient websocketHost "/" 443 (\byteStringMsg -> C.writeChan queue $ toOrder (Aeson.decode byteStringMsg :: Maybe BitstampMessage)) subscribe
+subscribeToDepthBook queue = Socket.runSecureClient websocketHost "/" 443 (handleBitstampMessage queue) subscribe
 
-subscribe2 :: IO ()
-subscribe2 = Socket.runSecureClient websocketHost "/" 443 (\byteStringMsg -> putStrLn ( show (Aeson.decode byteStringMsg :: Maybe BWS.Message))) subscribe
+handleBitstampMessage :: C.Chan [Order] -> BL.ByteString -> IO ()
+handleBitstampMessage queue byteStringMsg = case (Aeson.decode byteStringMsg :: Maybe BWS.Message) of
+                                            Just msg -> C.writeChan queue $ toOrder msg
+                                            Nothing -> putStrLn $ "Unknown Bitstamp message !\n \t Message received: " ++ (show byteStringMsg)
 
 {- | Small worker which fetches the current applicable fees in a given interval -}
 subscribeToFees :: MVar.MVar BitstampFeeTable -> IO ()
