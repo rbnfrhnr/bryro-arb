@@ -104,7 +104,6 @@ runFeed (PriceFeedConfig kafkaConf influxConf) = do
                                                  let worker queue params batchLine
                                                                                   | Prelude.length batchLine >= 750 = do
                                                                                                                       orders <- Chan.readChan queue
-                                                                                                                      Prelude.putStrLn "Writing batch to Influx"
                                                                                                                       let batchLine' = (Prelude.map (mapToInfluxData) orders) ++ batchLine
                                                                                                                       result <- run . produceMessages $ byteMessages [(Aeson.encode orders)]
                                                                                                                       forkIO $ writeBatch params batchLine'
