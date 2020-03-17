@@ -24,8 +24,8 @@ main = do
 --       Binance.subscribeToFees binanceFees
 --
        orderQueue <- newChan
-       Bitstamp.subscribeToDepthBook orderQueue
-       Binance.subscribeToDepthBook orderQueue
+--       Bitstamp.subscribeToDepthBook orderQueue
+--       Binance.subscribeToDepthBook orderQueue
        Kraken.subscribeToDepthBook orderQueue
 --
        worker orderQueue
