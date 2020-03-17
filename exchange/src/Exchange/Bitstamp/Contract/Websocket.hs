@@ -57,6 +57,7 @@ instance FromJSON Message
                                         Just (String "data")                       -> orderMessage (Object object)
                                         Just (String "bts:request_reconnect")      -> ForcedReconnection <$> fmap textToStrict (object .: "event")
                                         _                                          -> fail $ "Unknown message format. Message sent from Bitstamp could not be parsed\n" ++ (show object)
+            parseJSON smth@(_)        = fail $ "Unknown message format. Message sent from Bitstamp could not be parsed\n" ++ (show smth)
 
 orderMessage :: Value -> AI.Parser Message
 orderMessage (Object object) = do

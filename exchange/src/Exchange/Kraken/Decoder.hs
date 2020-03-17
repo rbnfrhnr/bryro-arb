@@ -89,9 +89,9 @@ instance ExchangeOrder KrakenMessage
                       msgTimestamp = timestamp message
                       currencyPair = toCurrencyPair $ symbol message
 
-instance (ExchangeOrder a) => ExchangeOrder (Maybe a)
-  where toOrder (Just message) = toOrder message
-        toOrder Nothing        = []
+--instance (ExchangeOrder a) => ExchangeOrder (Maybe a)
+--  where toOrder (Just message) = toOrder message
+--        toOrder Nothing        = []
 
 
 
