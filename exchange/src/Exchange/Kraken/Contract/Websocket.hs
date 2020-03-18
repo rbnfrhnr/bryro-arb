@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Exchange.Kraken.Contract.Websocket(
-       KrakenOrderMessage
+       KrakenMessage
 ) where
 
 import Data.Aeson.Types
@@ -16,13 +16,24 @@ import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.Vector as V
 
-data KrakenOrderMessage = KrakenOrderMessage {
+data KrakenMessage = KrakenOrderMessage {
      krakenOrderChannelName :: !B.ByteString
     ,krakenOrderSymbol      :: !B.ByteString
     ,krakenOrderAsks        :: [[Double]]
     ,krakenOrderBids        :: [[Double]]
-    ,krakenOrderTimestamp   :: !Int
-} deriving (Show)
+    ,krakenOrderTimestamp   :: !Integer
+}  | KrakenConnectionMessage {
+     krakenConnectionId     :: !Integer
+    ,krakenConnectionEvent  :: !B.ByteString
+    ,krakenConnectionStatus :: !B.ByteString
+    ,krakenConnectionVs     :: !B.ByteString
+}  | KrakenSubscriptionMessage {
+     krakenSubscriptionChId    :: !Integer
+    ,krakenSubscriptionChName  :: !B.ByteString
+    ,krakenSubscriptionChEvent :: !B.ByteString
+    ,krakenSubscriptionChPair  :: !B.ByteString
+    ,krakenSubscriptionStatus  :: !B.ByteString
+} | KrakenHeartbeatMessage deriving (Show)
 
 
 textToStrict :: (T.Text -> B.ByteString)
@@ -32,60 +43,69 @@ textArrayToStrict :: ([[TL.Text]] -> [[B.ByteString]])
 textArrayToStrict = map (map (BL.toStrict . TLE.encodeUtf8))
 
 byteStringToDouble :: B.ByteString -> Double
-byteStringToDouble bs = read (BC.unpack bs) :: Double
+byteStringToDouble bs = read (show bs) :: Double
 
-byteStringToInteger :: B.ByteString -> Int
-byteStringToInteger bs = read (BC.unpack bs) :: Int
+byteStringToInteger :: B.ByteString -> Integer
+byteStringToInteger bs = read (show bs) :: Integer
 
-mapByteStringOrders :: [[B.ByteString]] -> [[Double]]
-mapByteStringOrders orders = map (map byteStringToDouble) orders
+mapByteStringToDouble :: [[B.ByteString]] -> [[Double]]
+mapByteStringToDouble bs = map (map byteStringToDouble) bs
 
-instance FromJSON KrakenOrderMessage where
+instance FromJSON KrakenMessage where
+         parseJSON (Object o) = case (HML.lookup "event" o) of
+                                Just (String "systemStatus")       -> parseKrakenConnectionMessage (Object o)
+                                Just (String "subscriptionStatus") -> parseKrakenSubscriptionMessage (Object o)
+                                Just (String "heartbeat")          -> return KrakenHeartbeatMessage
+                                _ -> fail $ show o
          parseJSON (Array a) = case V.toList a of
-                               vec@(subId:datObject:channel:symbol:[]) -> parseMessage vec
-                               _                                       -> fail $ "Unknown message from Kraken:\t" ++ (show a)
-         parseJSON smth@(_)  = fail $ "Unknown message from Kraken:\t" ++ (show smth)
+                               vec@(_:_:_:_:[]) -> parseMessage vec
+                               _                -> fail $ "Unknown Array message from Kraken:\t" ++ (show a)
+         parseJSON smth@(_)   = fail $ "Unknown message from Kraken:\t" ++ (show smth)
 
-parseMessage :: [Value] -> Parser KrakenOrderMessage
+parseMessage :: [Value] -> Parser KrakenMessage
 parseMessage (subId:dataObject:(String channel):(String symbol):[]) = do
---                                                    (asks, bids) <- getOrders dataObject
---                                                    let bTimestamp = byteStringToInteger $ getTimestampFromOrder (asks, bids)
---                                                    return $ KrakenOrderMessage bChannel bSymbol (mapByteStringOrders asks) (mapByteStringOrders bids) $ bTimestamp
-                                                    return $ KrakenOrderMessage bChannel bSymbol [] [] 0
+                                                    asks <- getAsks dataObject
+                                                    bids <- getBids dataObject
+                                                    return $ KrakenOrderMessage bChannel bSymbol (mapByteStringToDouble asks) (mapByteStringToDouble bids) (round (byteStringToDouble (getTimestampFromOrder asks bids)))
                                                     where bChannel   = textToStrict channel
                                                           bSymbol    = textToStrict symbol
 
-getOrders :: Value -> Parser ([[B.ByteString]], [[B.ByteString]])
-getOrders (Object object) = case (HML.lookup "as" object) of
-                            Just object -> parseInitialOrders object
-                            Nothing            -> case (HML.lookup "a" object) of
-                                                  Just obj -> parseUpdateOrders obj
-                                                  _        -> fail $ show object
+getAsks :: Value -> Parser [[B.ByteString]]
+getAsks (Object object) = case (HML.lookup "as" object) of
+                          Just (Array _) -> fmap (textArrayToStrict) (object .: "as")
+                          Nothing        -> case (HML.lookup "a" object) of
+                                            Just (Array _) -> fmap (textArrayToStrict) (object .: "a")
+                                            Nothing        -> return []
 
-parseInitialOrders :: Value -> Parser ([[B.ByteString]], [[B.ByteString]])
-parseInitialOrders (Object object) = do
-                                     asks <- fmap (textArrayToStrict) (object .:? "as" .!= [])
-                                     bids <- fmap (textArrayToStrict) (object .:? "bs" .!= [])
-                                     return $ (asks, bids)
-parseInitialOrders smth            = fail $ show smth
+getBids :: Value -> Parser [[B.ByteString]]
+getBids (Object object) = case (HML.lookup "bs" object) of
+                          Just (Array _) -> fmap (textArrayToStrict) (object .: "bs")
+                          Nothing        -> case (HML.lookup "b" object) of
+                                            Just (Array _) -> fmap (textArrayToStrict) (object .: "b")
+                                            Nothing        -> return []
 
-parseUpdateOrders :: Value -> Parser ([[B.ByteString]], [[B.ByteString]])
-parseUpdateOrders (Object object) = do
-                                    asks <- fmap (textArrayToStrict) (object .:? "a" .!= [])
-                                    bids <- fmap (textArrayToStrict) (object .:? "b" .!= [])
-                                    return $ (asks, bids)
-parseUpdateOrders smth            = fail $ show smth
+getTimestampFromOrder :: [[B.ByteString]] -> [[B.ByteString]] -> B.ByteString
+getTimestampFromOrder ((_:_:timestamp:[]):xs) _  = timestamp
+getTimestampFromOrder [] ((_:_:timestamp:[]):xs) = timestamp
 
+parseKrakenConnectionMessage :: Value -> Parser KrakenMessage
+parseKrakenConnectionMessage (Object object) = KrakenConnectionMessage
+                                                <$> object .: "connectionID"
+                                                <*> fmap (textToStrict) (object .: "event")
+                                                <*> fmap (textToStrict) (object .: "status")
+                                                <*> fmap (textToStrict) (object .: "version")
 
-getTimestampFromOrder :: ([[B.ByteString]], [[B.ByteString]]) -> B.ByteString
-getTimestampFromOrder (((_:_:timestamp:[]):xs), _) = timestamp
-getTimestampFromOrder ([],((_:_:timestamp:[]):xs)) = timestamp
+parseKrakenSubscriptionMessage :: Value -> Parser KrakenMessage
+parseKrakenSubscriptionMessage (Object object) = KrakenSubscriptionMessage
+                                                 <$> object .: "channelID"
+                                                 <*> fmap (textToStrict) (object .: "channelName")
+                                                 <*> fmap (textToStrict) (object .: "event")
+                                                 <*> fmap (textToStrict) (object .: "pair")
+                                                 <*> fmap (textToStrict) (object .: "status")
 
-
-
-instance ExchangeOrder KrakenOrderMessage where
+instance ExchangeOrder KrakenMessage where
   toOrder message@(KrakenOrderMessage _ _ _ _ _) = (map (\(price:qty:xs) -> AskOrder (mapToBaseOrder currencyPair price qty msgTimestamp)) asksArray) ++ (map (\(price:qty:xs) -> BidOrder (mapToBaseOrder currencyPair price qty msgTimestamp)) bidsArray)
-                where msgTimestamp = krakenOrderTimestamp message
+                where msgTimestamp = fromInteger $ krakenOrderTimestamp message
                       currencyPair = getCurrencyPairFromMessage message
                       asksArray    = krakenOrderAsks message
                       bidsArray    = krakenOrderBids message
@@ -98,7 +118,7 @@ mapToBaseOrder :: CurrencyPair -> Double -> Double -> Int -> BaseOrder
 mapToBaseOrder currency price qty timestamp = BaseOrder Kraken currency price qty timestamp
 
 
-getCurrencyPairFromMessage :: KrakenOrderMessage -> CurrencyPair
+getCurrencyPairFromMessage :: KrakenMessage -> CurrencyPair
 getCurrencyPairFromMessage krakenMessage = getCurrencyPairFromChannel $ BC.unpack $ krakenOrderChannelName krakenMessage
 
 getCurrencyPairFromChannel :: String -> CurrencyPair
