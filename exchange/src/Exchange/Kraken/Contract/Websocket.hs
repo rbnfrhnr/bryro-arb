@@ -58,9 +58,9 @@ parseMessage (subId:dataObject:(String channel):(String symbol):[]) = do
 getOrders :: Value -> Parser ([[B.ByteString]], [[B.ByteString]])
 getOrders (Object object) = case (HML.lookup "as" object) of
                             Just object -> parseInitialOrders object
-                            Nothing            -> case (HML.lookup "a" object) of
-                                                  Just obj -> parseUpdateOrders obj
-                                                  _        -> fail $ show object
+                            Nothing     -> case (HML.lookup "a" object) of
+                                           Just obj -> parseUpdateOrders obj
+                                           _        -> fail $ show object
 
 parseInitialOrders :: Value -> Parser ([[B.ByteString]], [[B.ByteString]])
 parseInitialOrders (Object object) = do
@@ -76,12 +76,9 @@ parseUpdateOrders (Object object) = do
                                     return $ (asks, bids)
 parseUpdateOrders smth            = fail $ show smth
 
-
 getTimestampFromOrder :: ([[B.ByteString]], [[B.ByteString]]) -> B.ByteString
 getTimestampFromOrder (((_:_:timestamp:[]):xs), _) = timestamp
 getTimestampFromOrder ([],((_:_:timestamp:[]):xs)) = timestamp
-
-
 
 instance ExchangeOrder KrakenOrderMessage where
   toOrder message@(KrakenOrderMessage _ _ _ _ _) = (map (\(price:qty:xs) -> AskOrder (mapToBaseOrder currencyPair price qty msgTimestamp)) asksArray) ++ (map (\(price:qty:xs) -> BidOrder (mapToBaseOrder currencyPair price qty msgTimestamp)) bidsArray)
@@ -96,7 +93,6 @@ instance (ExchangeOrder a) => ExchangeOrder (Maybe a) where
 
 mapToBaseOrder :: CurrencyPair -> Double -> Double -> Int -> BaseOrder
 mapToBaseOrder currency price qty timestamp = BaseOrder Kraken currency price qty timestamp
-
 
 getCurrencyPairFromMessage :: KrakenOrderMessage -> CurrencyPair
 getCurrencyPairFromMessage krakenMessage = getCurrencyPairFromChannel $ BC.unpack $ krakenOrderChannelName krakenMessage
