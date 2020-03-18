@@ -48,10 +48,10 @@ instance FromJSON KrakenOrderMessage where
 
 parseMessage :: [Value] -> Parser KrakenOrderMessage
 parseMessage (subId:dataObject:(String channel):(String symbol):[]) = do
---                                                    (asks, bids) <- getOrders dataObject
+                                                    (asks, bids) <- getOrders dataObject
 --                                                    let bTimestamp = byteStringToInteger $ getTimestampFromOrder (asks, bids)
 --                                                    return $ KrakenOrderMessage bChannel bSymbol (mapByteStringOrders asks) (mapByteStringOrders bids) $ bTimestamp
-                                                    return $ KrakenOrderMessage bChannel bSymbol [] [] 0
+                                                    return $ KrakenOrderMessage bChannel bSymbol asks bids 0
                                                     where bChannel   = textToStrict channel
                                                           bSymbol    = textToStrict symbol
 
