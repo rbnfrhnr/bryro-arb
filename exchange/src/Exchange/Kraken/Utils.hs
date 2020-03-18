@@ -27,7 +27,7 @@ subscribeToDepthBook queue = Socket.runSecureClient websocketHost "/" 443 (handl
 handleKrakenMessage :: C.Chan [Order] -> BL.ByteString -> IO ()
 handleKrakenMessage queue byteStringMsg = case (Aeson.decode byteStringMsg :: Maybe KW.KrakenOrderMessage) of
                                             Just msg -> C.writeChan queue $ toOrder msg
-                                            Nothing -> putStrLn $ "Unknown Bitstamp message !\n \t Message received: " ++ (show byteStringMsg)
+                                            Nothing -> putStrLn $ "Unknown Kraken message !\n \t Message received: " ++ (show byteStringMsg)
 
 
 {- | Small worker which fetches the current applicable fees in a given interval -}
