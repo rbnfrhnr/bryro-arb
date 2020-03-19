@@ -110,7 +110,7 @@ instance ExchangeOrder KrakenMessage where
                       currencyPair = getCurrencyPairFromMessage message
                       asksArray    = krakenOrderAsks message
                       bidsArray    = krakenOrderBids message
-  toOrder _ = fail
+  toOrder msg@(_) = fail "No KrakenOrderMessage \n\t"
 
 instance (ExchangeOrder a) => ExchangeOrder (Maybe a) where
   toOrder (Just message) = toOrder message
