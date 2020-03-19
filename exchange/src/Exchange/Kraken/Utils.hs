@@ -4,12 +4,13 @@ module Exchange.Kraken.Utils (
 
 import qualified Control.Concurrent.MVar as MVar
 import qualified Control.Concurrent.Chan as C
-import qualified Exchange.Network.Socket as Socket
 import qualified Data.ByteString.Internal as B
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Aeson as Aeson
 import qualified Exchange.Kraken.Secured as KrakenSecured
 import qualified Exchange.Kraken.Contract.Websocket as KW
+import qualified Exchange.Network.Socket as Socket
+import qualified System.IO as IO
 import Control.Concurrent
 import Network.WebSockets
 import Exchange.Kraken.Decoder
@@ -25,10 +26,9 @@ subscribeToDepthBook :: C.Chan [Order] -> IO ()
 subscribeToDepthBook queue = Socket.runSecureClient websocketHost "/" 443 (handleKrakenMessage queue) subscribe
 
 handleKrakenMessage :: C.Chan [Order] -> BL.ByteString -> IO ()
-handleKrakenMessage queue byteStringMsg = case (Aeson.decode byteStringMsg :: Maybe KW.KrakenOrderMessage) of
-                                            Just msg -> C.writeChan queue $ toOrder msg
-                                            Nothing -> putStrLn $ "Unknown Kraken message !\n \t Message received: " ++ (show byteStringMsg)
-
+handleKrakenMessage queue byteStringMsg = case (Aeson.eitherDecode byteStringMsg :: Either String KW.KrakenMessage) of
+                                          Right msg -> C.writeChan queue $ toOrder msg
+                                          Left err  -> IO.hPutStr IO.stderr $ (show err) ++ "\n\t" ++ (show byteStringMsg)
 
 {- | Small worker which fetches the current applicable fees in a given interval -}
 subscribeToFees :: MVar.MVar KrakenFeeTable -> IO ()
