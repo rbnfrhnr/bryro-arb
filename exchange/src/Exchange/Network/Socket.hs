@@ -7,15 +7,15 @@ import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Lazy.Internal as B
 import qualified Network.Connection as C
-import qualified Network.Socket as S
 import qualified Network.WebSockets as WS
 import qualified Network.WebSockets as W
 import qualified Network.WebSockets.Stream as Stream
 import Control.Concurrent
+import Network.Socket
 
 
 {- endpoint, port, queue, function applied at con open -}
-runSecureClient :: String -> String-> S.PortNumber -> (BL.ByteString -> IO ()) -> (W.Connection -> IO ()) -> IO ()
+runSecureClient :: String -> String-> PortNumber -> (BL.ByteString -> IO ()) -> (W.Connection -> IO ()) -> IO ()
 runSecureClient host path port onMessage onOpen = do
     context <- C.initConnectionContext
     connection <- C.connectTo context (connectionParams host port)
@@ -43,7 +43,7 @@ worker connection onMessage = loop
 
 
 {- connection config -}
-connectionParams :: String -> S.PortNumber -> C.ConnectionParams
+connectionParams :: String -> PortNumber -> C.ConnectionParams
 connectionParams host port = C.ConnectionParams
     { C.connectionHostname = host
     , C.connectionPort = port
