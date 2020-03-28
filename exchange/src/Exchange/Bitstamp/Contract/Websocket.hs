@@ -29,50 +29,62 @@ byteStringToDouble bs = read (BC.unpack bs) :: Double
 byteStringToInteger :: ByteString -> Int
 byteStringToInteger bs = read (BC.unpack bs) :: Int
 
-data Message = SubscribeMessage {
-     subMsgEvent   :: !ByteString
-    ,subMsgChannel :: !ByteString
+data Message  =  SubscribeMessage {
+     subMsgEvent          :: !ByteString
+    ,subMsgChannel        :: !ByteString
 } | UnsubscribeMessage {
-     unsubMsgEvent   :: !ByteString
-    ,unsubMsgChannel :: !ByteString
+     unsubMsgEvent        :: !ByteString
+    ,unsubMsgChannel      :: !ByteString
 } | FullOrderBookMessage {
-     fullOrderBookEvent         :: !ByteString
-    ,fullOrderBookChannel       :: !ByteString
-    ,fullOrderMsgData           :: !FullOrderBookData
+     fullOrderBookEvent   :: !ByteString
+    ,fullOrderBookChannel :: !ByteString
+    ,fullOrderMsgData     :: !FullOrderBookData
 } | ForcedReconnection {
      forcedReconnectEvent :: !ByteString
-} | SomeMessage ByteString deriving (Show)
+} deriving (Show)
 
 data FullOrderBookData = FullOrderBookData {
      fOrderBookBids          :: ![[ByteString]]
     ,fOrderBookAsks          :: ![[ByteString]]
-    ,fOrderMsgTimestamp      :: !ByteString -- | yes.. Bytestring
+    ,fOrderMsgTimestamp      :: !ByteString
     ,fOrderMsgMicroTimestamp :: !ByteString
 } deriving (Show)
 
+parseSubscribeMessage :: Value -> AI.Parser Message
+parseSubscribeMessage (Object object) = SubscribeMessage
+                                        <$> fmap textToStrict (object .: "event")
+                                        <*> fmap textToStrict (object .: "channel")
+
+parseUnsubscribeMessage :: Value -> AI.Parser Message
+parseUnsubscribeMessage (Object object)  = UnsubscribeMessage
+                                           <$> fmap textToStrict (object .: "event")
+                                           <*> fmap textToStrict (object .: "channel")
+
+parseFullOrderBookMessage :: Value -> AI.Parser Message
+parseFullOrderBookMessage (Object object) = FullOrderBookMessage
+                                            <$> fmap textToStrict (object .: "event")
+                                            <*> fmap textToStrict (object .: "channel")
+                                            <*> object .: "data"
+
+parseForcedReconnection :: Value -> AI.Parser Message
+parseForcedReconnection (Object object) = ForcedReconnection
+                                          <$> fmap textToStrict (object .: "event")
+
 instance FromJSON Message
       where parseJSON (Object object) = case (HML.lookup "event"  object) of
-                                        Just (String "bts:subscription_succeeded") -> SubscribeMessage <$> fmap textToStrict (object .: "event") <*> fmap textToStrict (object .: "channel")
-                                        Just (String "bts:unsubscribe")            -> UnsubscribeMessage <$> fmap textToStrict (object .: "event") <*> fmap textToStrict (object .: "channel")
-                                        Just (String "data")                       -> orderMessage (Object object)
-                                        Just (String "bts:request_reconnect")      -> ForcedReconnection <$> fmap textToStrict (object .: "event")
+                                        Just (String "bts:subscription_succeeded") -> (parseSubscribeMessage (Object object))
+                                        Just (String "bts:unsubscribe")            -> (parseUnsubscribeMessage (Object object))
+                                        Just (String "data")                       -> (parseFullOrderBookMessage (Object object))
+                                        Just (String "bts:request_reconnect")      -> (parseForcedReconnection (Object object))
                                         _                                          -> fail $ "Unknown message format. Message sent from Bitstamp could not be parsed\n" ++ (show object)
             parseJSON smth@(_)        = fail $ "Unknown message format. Message sent from Bitstamp could not be parsed\n" ++ (show smth)
 
-orderMessage :: Value -> AI.Parser Message
-orderMessage (Object object) = do
-                               event   <- fmap textToStrict $ object .: "event"
-                               channel <- fmap textToStrict $ object .: "channel"
-                               msgData <- messageData (HML.lookup "data" object)
-                               return (FullOrderBookMessage event channel msgData)
-
-messageData :: Maybe Value -> AI.Parser FullOrderBookData
-messageData (Just (Object object))  = do
-                                      asks           <- fmap (textArrayToStrict) (object .: "asks")
-                                      bids           <- fmap (textArrayToStrict) (object .: "bids")
-                                      timestamp      <- fmap textToStrict $ object .: "timestamp"
-                                      microtimestamp <- fmap textToStrict $ object .: "microtimestamp"
-                                      return (FullOrderBookData asks bids timestamp microtimestamp)
+instance FromJSON FullOrderBookData where
+      parseJSON (Object object) = FullOrderBookData
+                                  <$> fmap (textArrayToStrict) (object .: "asks")
+                                  <*> fmap (textArrayToStrict) (object .: "bids")
+                                  <*> fmap textToStrict (object .: "timestamp")
+                                  <*> fmap textToStrict (object .: "microtimestamp")
 
 instance ExchangeOrder Message where
   toOrder message@(FullOrderBookMessage _ _ _) = (Prelude.map (\(price:qty:[]) -> AskOrder (mapToBaseOrder currencyPair price qty msgTimestamp)) asksArray) ++ (Prelude.map (\(price:qty:[]) -> BidOrder (mapToBaseOrder currencyPair price qty msgTimestamp)) bidsArray)
@@ -91,7 +103,7 @@ mapToBaseOrder currency price qty timestamp = BaseOrder Bitstamp currency (byteS
 
 
 getCurrencyPairFromMessage :: Message -> CurrencyPair
-getCurrencyPairFromMessage bitstamp = getCurrencyPairFromChannel $ BC.unpack $ fullOrderBookChannel bitstamp
+getCurrencyPairFromMessage (FullOrderBookMessage _ channel _) = getCurrencyPairFromChannel $ BC.unpack $ channel
 
 getCurrencyPairFromChannel :: String -> CurrencyPair
 getCurrencyPairFromChannel "diff_order_book_ltcusd" = LTCUSD
