@@ -8,6 +8,7 @@ import qualified Data.Aeson as Aeson
 import Exchange.Bitstamp.Utils as Bitstamp
 import Exchange.Binance.Utils as Binance
 import Exchange.Kraken.Utils as Kraken
+import Exchange.Network.Utils
 import Control.Concurrent
 import Control.Concurrent.Chan as Chan
 import Data.ByteString
@@ -93,9 +94,9 @@ runFeed :: PriceFeedConfig -> IO ()
 runFeed (PriceFeedConfig kafkaConf influxConf) = do
                                                  Prelude.putStrLn "Started order-feed"
                                                  orderQueue <- newChan
-                                                 Bitstamp.subscribeToDepthBook orderQueue
-                                                 Binance.subscribeToDepthBook orderQueue
-                                                 Kraken.subscribeToDepthBook orderQueue
+                                                 Bitstamp.subscribeToDepthBook $ orderFeedHandler orderQueue Bitstamp.parseBitstampMessage
+                                                 Binance.subscribeToDepthBook $ orderFeedHandler orderQueue Binance.parseBinanceMessage
+                                                 Kraken.subscribeToDepthBook $ orderFeedHandler orderQueue Kraken.parseKrakenMessage
 
                                                  let run = runKafka $ mkKafkaState "price-feed-client" (kafkaHost', kafkaPort')
                                                      byteMessages = fmap (TopicAndMessage topic . makeMessage . BL.toStrict)

@@ -1,5 +1,6 @@
 module Exchange.Kraken.Utils (
-       subscribeToDepthBook
+       parseKrakenMessage
+      ,subscribeToDepthBook
 ) where
 
 import qualified Control.Concurrent.MVar as MVar
@@ -26,8 +27,8 @@ websocketHost :: String
 websocketHost = "ws.kraken.com"
 
 {- | Websocket worker which receives the order-book updates-}
-subscribeToDepthBook :: C.Chan [Order] -> IO ()
-subscribeToDepthBook queue = Socket.runSecureClient websocketHost "/" 443 (orderFeedHandler queue parseKrakenMessage) subscribe
+subscribeToDepthBook :: (BL.ByteString -> IO () )  -> IO ()
+subscribeToDepthBook partialHandler = Socket.runSecureClient websocketHost "/" 443 (partialHandler) subscribe
 
 
 {- | Small worker which fetches the current applicable fees in a given interval -}
