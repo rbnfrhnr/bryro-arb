@@ -12,6 +12,7 @@ import qualified Network.WebSockets as W
 import qualified Network.WebSockets.Stream as Stream
 import Control.Concurrent
 import Network.Socket
+import System.IO
 
 
 {- endpoint, port, queue, function applied at con open -}
@@ -34,7 +35,7 @@ worker connection onMessage = loop
                     where loop = do
                                  result <- E.try ( WS.receiveDataMessage connection) :: IO (Either W.ConnectionException W.DataMessage)
                                  case result of
-                                    Left ex -> putStrLn $ "Exception in Websocket connection " ++ (show ex)
+                                    Left ex -> (putStrLn $ "Exception in Websocket connection " ++ (show ex)) >> (hFlush stdout)
                                     Right (W.Binary val) -> onMessage val
                                     Right (W.Text val1 val2) -> onMessage  val1
                                  loop
