@@ -1,5 +1,6 @@
 module Exchange.Binance.Utils (
-       subscribeToDepthBook
+       parseBinanceMessage
+      ,subscribeToDepthBook
       ,subscribeToFees
 ) where
 
@@ -26,8 +27,8 @@ channels :: String
 channels = "ltcusdt@depth@100ms/xrpusdt@depth@100ms/ethusdt@depth@100ms/bchusdt@depth@100ms"
 
 {- | Websocket worker which receives the order-book updates-}
-subscribeToDepthBook :: C.Chan [Order] -> IO ()
-subscribeToDepthBook queue = Socket.runSecureClient websocketHost ("/ws/" ++ channels) 9443 (orderFeedHandler queue parseBinanceMessage) (\x-> return ())
+subscribeToDepthBook :: (BL.ByteString -> IO () )  -> IO ()
+subscribeToDepthBook partialHandler = Socket.runSecureClient websocketHost ("/ws/" ++ channels) 9443 (partialHandler) (\x-> return ())
 
 {- | Small worker which fetches the current applicable fees in a given interval -}
 subscribeToFees :: MVar.MVar BinanceFeeTable -> IO ()

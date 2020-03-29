@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Exchange.Bitstamp.Utils (
-       subscribeToFees
+       parseBitstampMessage
+      ,subscribeToFees
       ,subscribeToDepthBook
 ) where
 
@@ -25,8 +26,8 @@ parseBitstampMessage msg = (Aeson.eitherDecode msg)  :: Either String BWS.Messag
 websocketHost :: String
 websocketHost = "ws.bitstamp.net"
 
-subscribeToDepthBook :: C.Chan [Order] -> IO ()
-subscribeToDepthBook queue = Socket.runSecureClient websocketHost "/" 443 (orderFeedHandler queue parseBitstampMessage) subscribe
+subscribeToDepthBook :: (BL.ByteString -> IO () ) -> IO ()
+subscribeToDepthBook partialHandler = Socket.runSecureClient websocketHost "/" 443 (partialHandler) subscribe
 
 {- | Small worker which fetches the current applicable fees in a given interval -}
 subscribeToFees :: MVar.MVar BitstampFeeTable -> IO ()

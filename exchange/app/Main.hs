@@ -2,6 +2,7 @@ module Main where
 
 import qualified Control.Concurrent.MVar as MVar
 import Finance.Types
+import Exchange.Network.Utils
 import Exchange.Binance.Types
 import Exchange.Bitstamp.Types
 import Exchange.Bitstamp.Utils as Bitstamp
@@ -15,6 +16,7 @@ data FeeTable = BitstampFeeTable | BinanceFeeTable deriving Show
 main :: IO ()
 main = do
        orderQueue <- newChan
+--       orderQueue <- newChan :: (Show a) => IO (Chan a)
        putStrLn "hey"
 --       Bitstamp.subscribe2 orderQueue
 
@@ -23,9 +25,10 @@ main = do
 --       Bitstamp.subscribeToFees bitstampFees
 --       Binance.subscribeToFees binanceFees
 --
-       Bitstamp.subscribeToDepthBook orderQueue
-       Binance.subscribeToDepthBook orderQueue
-       Kraken.subscribeToDepthBook orderQueue
+--       (orderFeedHandler queue parseBitstampMessage)
+       Bitstamp.subscribeToDepthBook $ defaultHandler orderQueue $ fmap (fmap show) Bitstamp.parseBitstampMessage
+       Binance.subscribeToDepthBook $ defaultHandler orderQueue $ fmap (fmap show) Binance.parseBinanceMessage
+       Kraken.subscribeToDepthBook $ defaultHandler orderQueue $ fmap (fmap show)  Kraken.parseKrakenMessage
 --
        worker orderQueue
 --       forkIO $ feesWorker bitstampFees
@@ -39,7 +42,7 @@ main = do
 --                       threadDelay 5000000
 --                       loop
 --
-worker :: Chan [Order] -> IO ()
+worker :: (Show a) => Chan a -> IO ()
 worker queue = loop
           where loop = do
                         orders <- Chan.readChan queue
