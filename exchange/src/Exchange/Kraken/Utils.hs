@@ -17,18 +17,18 @@ import Exchange.Kraken.Decoder
 import Exchange.Kraken.Types
 import Exchange.Types
 import Finance.Types
+import Exchange.Network.Utils
+
+parseKrakenMessage :: (BL.ByteString -> Either String  KW.KrakenMessage)
+parseKrakenMessage msg = (Aeson.eitherDecode msg)  :: Either String KW.KrakenMessage
 
 websocketHost :: String
 websocketHost = "ws.kraken.com"
 
 {- | Websocket worker which receives the order-book updates-}
 subscribeToDepthBook :: C.Chan [Order] -> IO ()
-subscribeToDepthBook queue = Socket.runSecureClient websocketHost "/" 443 (handleKrakenMessage queue) subscribe
+subscribeToDepthBook queue = Socket.runSecureClient websocketHost "/" 443 (orderFeedHandler queue parseKrakenMessage) subscribe
 
-handleKrakenMessage :: C.Chan [Order] -> BL.ByteString -> IO ()
-handleKrakenMessage queue byteStringMsg = case (Aeson.eitherDecode byteStringMsg :: Either String KW.KrakenMessage) of
-                                          Right msg -> C.writeChan queue $ toOrder msg
-                                          Left err  -> IO.hPutStr IO.stderr $ (show err) ++ "\n\t" ++ (show byteStringMsg)
 
 {- | Small worker which fetches the current applicable fees in a given interval -}
 subscribeToFees :: MVar.MVar KrakenFeeTable -> IO ()
@@ -46,4 +46,3 @@ subscribe :: Connection -> IO ()
 subscribe connection = do
                        let msg = B.packChars "{\"event\": \"subscribe\",\"pair\": [\"XRP/USD\", \"ETH/USD\", \"LTC/USD\", \"BCH/USD\"], \"subscription\": {\"name\": \"book\"}}"
                        sendTextData connection msg
-                       return ()

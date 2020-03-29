@@ -32,14 +32,14 @@ byteStringToInteger bs = read (BC.unpack bs) :: Int
 data Message  =  SubscribeMessage {
      subMsgEvent          :: !ByteString
     ,subMsgChannel        :: !ByteString
-} | UnsubscribeMessage {
+}  | UnsubscribeMessage {
      unsubMsgEvent        :: !ByteString
     ,unsubMsgChannel      :: !ByteString
-} | FullOrderBookMessage {
+}  | FullOrderBookMessage {
      fullOrderBookEvent   :: !ByteString
     ,fullOrderBookChannel :: !ByteString
     ,fullOrderMsgData     :: !FullOrderBookData
-} | ForcedReconnection {
+}  | ForcedReconnection {
      forcedReconnectEvent :: !ByteString
 } deriving (Show)
 

@@ -14,7 +14,7 @@ data FeeTable = BitstampFeeTable | BinanceFeeTable deriving Show
 
 main :: IO ()
 main = do
---       orderQueue <- newChan
+       orderQueue <- newChan
        putStrLn "hey"
 --       Bitstamp.subscribe2 orderQueue
 
@@ -23,9 +23,8 @@ main = do
 --       Bitstamp.subscribeToFees bitstampFees
 --       Binance.subscribeToFees binanceFees
 --
-       orderQueue <- newChan
---       Bitstamp.subscribeToDepthBook orderQueue
---       Binance.subscribeToDepthBook orderQueue
+       Bitstamp.subscribeToDepthBook orderQueue
+       Binance.subscribeToDepthBook orderQueue
        Kraken.subscribeToDepthBook orderQueue
 --
        worker orderQueue
