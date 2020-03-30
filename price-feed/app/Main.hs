@@ -45,9 +45,9 @@ data PriceFeedConfig = PriceFeedConfig KafkaConfig InfluxConfig
 
 createConfig :: Config -> IO PriceFeedConfig
 createConfig config = do
-                       kafkaConfig <- createKafkaConfig config
-                       influxConfig <- createInfluxConfig config
-                       return (PriceFeedConfig kafkaConfig influxConfig)
+                      kafkaConfig <- createKafkaConfig config
+                      influxConfig <- createInfluxConfig config
+                      return (PriceFeedConfig kafkaConfig influxConfig)
 
 configFile :: FilePath -> [Worth FilePath]
 configFile name = [Required $ "resources" </> name]
@@ -69,28 +69,18 @@ runFeed (PriceFeedConfig kafkaConf influxConf) = do
                                                  Kraken.subscribeToDepthBook $ orderFeedHandler orderQueue Kraken.parseKrakenMessage
 
                                                  let run = runKafka $ mkKafkaState "price-feed-client" (kafkaHost', kafkaPort')
-                                                     byteMessages = fmap (TopicAndMessage topic . makeMessage . BL.toStrict)
-                                                 let params = writeParams db & authentication ?~ cred & server.host .~ hostAddress & precision .~ Nanosecond
+                                                 let byteMessages = fmap (TopicAndMessage topic . makeMessage . BL.toStrict)
+                                                 influxConn <- getConnectionConf influxConf
 
-                                                 let worker queue params batchLine
-                                                                                  | Prelude.length batchLine >= 750 = do
-                                                                                                                      orders <- Chan.readChan queue
-                                                                                                                      let batchLine' = (Prelude.map (mapToInfluxData) orders) ++ batchLine
-                                                                                                                      result <- run . produceMessages $ byteMessages [(Aeson.encode orders)]
-                                                                                                                      forkIO $ writeBatch params batchLine'
-                                                                                                                      worker queue params []
-                                                                                  | otherwise = do
-                                                                                                orders <- Chan.readChan queue
-                                                                                                let batchLine' = (Prelude.map (mapToInfluxData) orders) ++ batchLine
-                                                                                                result <- run . produceMessages $ byteMessages [(Aeson.encode orders)]
-                                                                                                worker queue params batchLine'
-                                                 worker orderQueue params []
-                                                 where db = formatDatabase F.string (influxDb influxConf)
-                                                       user = influxUser influxConf
-                                                       password = influxPassword influxConf
-                                                       cred = credentials user password
-                                                       hostAddress = influxHost influxConf
-                                                       topic = TName $ KString $ kafkaTopic kafkaConf
+                                                 let worker queue influxConn = do
+                                                                         orders <- Chan.readChan queue
+                                                                         result <- run . produceMessages $ byteMessages [(Aeson.encode orders)]
+                                                                         influxConn2 <- writeToInflux influxConn (Prelude.map (mapToInfluxData) orders)
+                                                                         worker queue influxConn2
+                                                 worker orderQueue influxConn
+
+
+                                                 where topic = TName $ KString $ kafkaTopic kafkaConf
                                                        kafkaHost' = Host $ KString $ kafkaHost kafkaConf
                                                        kafkaPort' = Port ((fromIntegral (kafkaPort kafkaConf)) :: Int32)
 
