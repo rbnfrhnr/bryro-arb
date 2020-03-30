@@ -38,38 +38,10 @@ import Control.Concurrent
 import Control.Exception
 import Control.Monad
 import Data.Int
-
-data KafkaConfig = KafkaConfig {
-                   kafkaTopic :: !ByteString
-                  ,kafkaHost  :: !ByteString
-                  ,kafkaPort  :: !Integer
-}
-
-data InfluxConfig = InfluxConfig {
-                    influxHost        :: !Text
-                   ,influxUser        :: !Text
-                   ,influxPassword    :: !Text
-                   ,influxMeasurement :: !String
-                   ,influxDb          :: !String
-}
+import Influx
+import Kafka
 
 data PriceFeedConfig = PriceFeedConfig KafkaConfig InfluxConfig
-
-createKafkaConfig :: Config -> IO KafkaConfig
-createKafkaConfig config = do
-                            (Just topic) <- lookup config "kafka.topic"
-                            (Just host) <- lookup config "kafka.host"
-                            (Just port) <- lookup config "kafka.port"
-                            return (KafkaConfig topic host port)
-
-createInfluxConfig :: Config -> IO InfluxConfig
-createInfluxConfig config = do
-                             (Just host) <- lookup config "influx.host"
-                             (Just user) <- lookup config "influx.user"
-                             (Just password) <- lookup config "influx.password"
-                             (Just measurement) <- lookup config "influx.measurement"
-                             (Just db) <- lookup config "influx.db"
-                             return (InfluxConfig host user password measurement db)
 
 createConfig :: Config -> IO PriceFeedConfig
 createConfig config = do
@@ -85,9 +57,7 @@ main = do
        mb <- try $ load (configFile "config.cfg")
        case mb of
            Left (err :: SomeException) -> Prelude.putStrLn $ show err
-           Right cfg -> do
-                          appConfig <- createConfig cfg
-                          runFeed appConfig
+           Right cfg -> createConfig cfg >>= runFeed
 
 
 runFeed :: PriceFeedConfig -> IO ()
