@@ -2,8 +2,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Influx (
        InfluxConfig(..)
+      ,InfluxData
       ,createInfluxConfig
-      ,getConnectionConf
+      ,getConnection
+      ,toInfluxLine
       ,writeToInflux
 ) where
 
@@ -18,6 +20,8 @@ import Control.Lens
 import Data.Int
 import qualified Database.InfluxDB.Format as F
 import Control.Concurrent
+import Data.Monoid
+import Data.Semigroup
 
 data InfluxConfig = InfluxConfig {
      influxHost        :: !T.Text
@@ -53,8 +57,17 @@ getConnectionConf cfg = do
 getConnection :: Config -> IO InfluxConnection
 getConnection cfgFile = createInfluxConfig cfgFile >>= getConnectionConf
 
-writeToInflux :: InfluxConnection -> [Influx.Line UTCTime] -> IO InfluxConnection
-writeToInflux (InfluxConnection batch params cfg) line
-                                                       | length batch > batchSize = forkIO (Influx.writeBatch params (line ++ batch)) >> return (InfluxConnection [] params cfg)
-                                                       | otherwise                = return (InfluxConnection (line ++ batch) params cfg)
+writeToInflux :: (Show a, InfluxData a) => InfluxConnection -> a -> IO InfluxConnection
+writeToInflux (InfluxConnection batch params cfg) rawData
+                                                       | length batch > batchSize = forkIO (Influx.writeBatch params ((toInfluxLine rawData) : batch)) >> return (InfluxConnection [] params cfg)
+                                                       | otherwise                = return (InfluxConnection ((toInfluxLine rawData) : batch) params cfg)
                                                        where batchSize = influxBatchSize cfg
+
+instance Semigroup InfluxConnection where
+         (<>) (InfluxConnection batch1 params cfg) (InfluxConnection batch2 _ _) = InfluxConnection (batch1 ++ batch2) params cfg
+
+instance Monoid InfluxConnection where
+         mempty = InfluxConnection [] (Influx.writeParams (Influx.formatDatabase F.string "" )) (InfluxConfig "" "" "" "" "" 750)
+
+class InfluxData a where
+    toInfluxLine :: a -> Influx.Line UTCTime
