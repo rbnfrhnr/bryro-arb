@@ -1,6 +1,7 @@
 module Exchange.Kraken.Utils (
        parseKrakenMessage
       ,subscribeToDepthBook
+      ,subscribe
 ) where
 
 import qualified Control.Concurrent.MVar as MVar

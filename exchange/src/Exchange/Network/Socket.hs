@@ -1,5 +1,6 @@
 module Exchange.Network.Socket (
   runSecureClient
+ ,runSecureClient2
 ) where
 
 import qualified Control.Exception as E
@@ -16,15 +17,24 @@ import System.IO
 
 
 {- endpoint, port, queue, function applied at con open -}
+--runSecureClient2 :: String -> String-> PortNumber -> (BL.ByteString -> IO ()) -> (W.Connection -> IO ()) -> IO ()
+runSecureClient2 :: String -> String-> PortNumber -> (W.Connection -> IO ()) -> IO (W.Connection)
+runSecureClient2 host path port onOpen = do
+    context <- C.initConnectionContext
+    connection <- C.connectTo context (connectionParams host port)
+    stream <- Stream.makeStream (reader connection) (writer connection)
+    newCon <- WS.newClientConnection stream host path connectionOptions []
+    onOpen newCon
+    return (newCon)
+
+{- endpoint, port, queue, function applied at con open -}
 runSecureClient :: String -> String-> PortNumber -> (BL.ByteString -> IO ()) -> (W.Connection -> IO ()) -> IO ()
 runSecureClient host path port onMessage onOpen = do
     context <- C.initConnectionContext
     connection <- C.connectTo context (connectionParams host port)
     stream <- Stream.makeStream (reader connection) (writer connection)
     newCon <- WS.newClientConnection stream host path connectionOptions []
-
     onOpen newCon
-
     forkIO $ worker newCon onMessage
     return ()
 

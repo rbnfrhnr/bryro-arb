@@ -12,6 +12,7 @@ import qualified Control.Concurrent.Chan as Chan
 import qualified Control.Concurrent.MVar as MVar
 import Control.Concurrent
 import Control.Monad
+import Control.Exception.Base
 import Exchange.Network.Sync.Types
 import Exchange.Network.Sync.Utils
 import System.IO
@@ -45,7 +46,7 @@ runFilteredChan fChan = fChan >> runFilteredChan fChan
 data DeduplicationTState = DeduplicationTState (Maybe BL.ByteString) (Map.Map BL.ByteString BL.ByteString) deriving (Show)
 
 instance WriteOut DeduplicationTState BL.ByteString where
-    writeOut chan (TransformerData (DeduplicationTState (Just msg) lookupMap)) = Chan.writeChan chan msg >> return (TransformerData $ DeduplicationTState Nothing (Map.insert msg msg lookupMap))
+    writeOut chan (TransformerData (DeduplicationTState (Just msg) lookupMap)) = appendFile "logg.txt" ("UNIQUE :" ++ (show msg)) >> Chan.writeChan chan msg >> return (TransformerData $ DeduplicationTState Nothing (Map.insert msg msg lookupMap))
     writeOut chan (TransformerData (DeduplicationTState _ lookupMap))          = return $ TransformerData $ DeduplicationTState Nothing lookupMap
 
 instance UpdateTransformerState BL.ByteString DeduplicationTState where
@@ -64,6 +65,23 @@ runPipedChan pipedChan = pipedChan >> runPipedChan pipedChan
 --bufferChan <- Chan.newChan :: IO (Chan BL.ByteString) -- man in the middle
 --outChan <- Chan.newChan :: IO (Chan BL.ByteString) -- propagates to cluster subscribers
 
+switchSource :: Chan BL.ByteString -> Chan BL.ByteString -> Chan BL.ByteString -> ThreadId -> ThreadId -> IO ThreadId
+switchSource oldSource newChan outChannel oldSourceTid oldNodeTid= do
+    killThread oldSourceTid
+
+--    qid <- forkIO ()
+
+    bufferChan <- Chan.newChan :: IO (Chan BL.ByteString) -- will be our new channel to the nodes
+
+    let dedupeBufferToOut = filteredChan bufferChan outChannel (TransformerData (DeduplicationTState Nothing Map.empty))
+    dTid <- forkIO ((Chan.readChan newChan) >>= (Chan.writeChan bufferChan) >> runFilteredChan dedupeBufferToOut)
+
+--    killThread qid
+
+    newSourceToOutTid <- forkIO $ runPipedChan $ pipeChan bufferChan outChannel
+
+    return (newSourceToOutTid)
+
 
 
 liveReconnect :: SyncedWSCluster -> IO (SyncedWSCluster)
@@ -81,7 +99,10 @@ liveReconnect cluster@(SyncedWSCluster outChannel inChannel nodeMap oldChannelTo
     putStrLn "STARTED DEDUPLICATION !!!!!!!!! \n\n\n\n\n"
 
     {- redirect data from webSockets to retire to deduplication queue (buffer to out) -}
-    oldChannelToBufferTid <- forkIO $ runPipedChan $ pipeChan inChannel bufferChan
+--    oldChannelToBufferTid <- forkIO $ runPipedChan $ pipeChan inChannel bufferChan
+--    forkIO $ (Chan.getChanContents inChannel) >>= (Chan.writeList2Chan bufferChan) >> return ()
+    let oldToNew = pipeChan inChannel newChan
+    oldChannelToBufferTid <- forkIO $ runPipedChan oldToNew
 
     {- redirect data from webSockets to create to deduplication queue (buffer to out) -}
     newChannelToBufferTid <- forkIO $ runPipedChan $ pipeChan newChan bufferChan
@@ -92,10 +113,10 @@ liveReconnect cluster@(SyncedWSCluster outChannel inChannel nodeMap oldChannelTo
                                                                return (Map.insert name nn mp)  ) Map.empty nodeMap
 
     {- Disconnect the old WebSockets and close kill threads  -}
-    _ <- mapM (\(SyncedWSNode pid _ _ _ _ cmdIn) -> do (MVar.putMVar cmdIn Exit)) nodeMap
+--    _ <- mapM (\(SyncedWSNode pid _ _ _ _ cmdIn) -> do (MVar.putMVar cmdIn Exit)) nodeMap
 
     {- todo NOW WE HAVE TO WAIT UNTIL THE NEW SOCKETS ARE CONNECTED... THEN KILL THE OLD SYNC-}
-    threadDelay (4 * 1000 * 1000)
+    threadDelay (2 * 1000 * 1000)
 
     {- kill the old pipe from the now retired/killed WebSockets to the buffer/deduplicator-}
     killThread oldChannelToBufferTid
@@ -123,7 +144,7 @@ mkEmptyCluster :: IO (SyncedWSCluster)
 mkEmptyCluster = do
                  inc <- Chan.newChan
                  outc <- Chan.newChan
-                 spid <- forkIO $ runPipedChan $ pipeChan inc outc
+                 spid <- forkFinally (runPipedChan (pipeChan inc outc)) (\ _ -> putStrLn "HEYOOOOOO")
                  return $ SyncedWSCluster outc inc (Map.empty) spid
 --
 addSockets :: WSDefinition -> SyncedWSCluster -> IO (SyncedWSCluster)

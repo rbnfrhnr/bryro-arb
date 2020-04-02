@@ -3,6 +3,7 @@ module Exchange.Bitstamp.Utils (
        parseBitstampMessage
       ,subscribeToFees
       ,subscribeToDepthBook
+      ,subscribe
 ) where
 
 import qualified Control.Concurrent.Chan as C
