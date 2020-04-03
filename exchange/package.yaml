@@ -32,6 +32,7 @@ dependencies:
   - http-client >=0.6.4
   - http-types >=0.12.3
   - network >=2.8.0.1
+  - stm >=2.5.0.0
   - text >=1.2.3.1
   - time >=1.8.0.2
   - unagi-chan >=0.4.1.3

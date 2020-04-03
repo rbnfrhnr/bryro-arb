@@ -16,8 +16,8 @@ import Exchange.Network.Sync.Cluster
 data FeeTable = BitstampFeeTable | BinanceFeeTable deriving Show
 
 main :: IO ()
-main = do
-       test2
+main = return ()
+--       test2
 --       orderQueue <- newChan
 --       orderQueue <- newChan :: (Show a) => IO (Chan a)
 --       putStrLn "hey"

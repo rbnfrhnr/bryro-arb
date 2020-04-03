@@ -6,20 +6,17 @@ module Exchange.Network.Sync.Types (
       ,MessageHandler
       ,OnWSOpen
       ,SyncedWSCluster(..)
-      ,SyncedWSClusterOut
       ,SyncedWSNode(..)
       ,SyncedWSNodeCommands(..)
       ,SyncedWSNodeName
       ,WSDefinition(..)
-
-      ,toSyncedWSClusterOutData
 ) where
 
 import qualified Data.Map as Map
 import qualified Data.ByteString.Lazy as BL
-import qualified Control.Concurrent.Chan.Unagi as Unagi
 import qualified Control.Concurrent.MVar as MVar
-import qualified Control.Concurrent.Chan as Chan
+import qualified Control.Concurrent.STM.TChan as Chan
+import qualified Control.Concurrent.QSem as Sem
 import qualified Network.WebSockets as WS
 import qualified Network.Socket as NS
 import Data.ByteString
@@ -29,18 +26,16 @@ import Control.Concurrent
      of the sockets produce a different type of data. However, they all need to be able to transform into the
      SyncedWSCluster output data type. This is enforced with ExistentialQuantification for all nodes
 -}
-data SyncedWSCluster  = SyncedWSCluster {
-     clusterOutChannel :: !(Chan.Chan BL.ByteString)
-    ,clusterInChannel  :: !(Chan.Chan BL.ByteString)
-    ,clusterWSMap      :: !(Map.Map SyncedWSNodeName (SyncedWSNode)) -- ^ as
-    ,clusterSyncPID    :: !ThreadId
+data SyncedWSCluster o  = SyncedWSCluster {
+     clusterOutChannel :: !(Chan.TChan o)
+    ,clusterInChannel  :: !(Chan.TChan BL.ByteString)
+    ,clusterWSMap      :: !(Map.Map SyncedWSNodeName (SyncedWSNode))
+    ,clusterSyncPID    :: !ThreadId -- ^ ThreadId of the syncing thread between clusterInChannel and clusterOutChannel
+    ,clusterSyncSem    :: !Sem.QSem -- ^ Semaphore for awaiting killing of syncing thread (Thread referenced by clusterSyncPID)
 }
 
-{- | Type parameter i denotes the type which the nodes produce/emit and o describes the unified type which will be
-     communicated to the cluster subscribes
- -}
-class SyncedWSClusterOut i o where
-      toSyncedWSClusterOutData :: i -> o
+class SyncedWSClusterForwardParser i o where
+    transformInputToOut :: i -> o
 
 type SyncedWSNodeName = String
 
@@ -48,15 +43,16 @@ type SyncedWSNodeName = String
      connections. Type parameter o allows to define the type which the websocket will emit.
 -}
 data SyncedWSNode =  SyncedWSNode {
-     syncedWSPID            :: !ThreadId                         -- ^ process ID after fork
-    ,syncedWSName           :: !SyncedWSNodeName                 -- ^ name of the websocket given by the user
-    ,syncedCommunicationOut :: !(Chan.Chan BL.ByteString)                    -- ^ channel which the websocket uses to communicate incoming messages
-    ,syncedCommandOut       :: !(Chan.Chan SyncedWSNodeCommands) -- ^ channel to allow to give commands to the cluster
-    ,syncedWSDefinition     :: !WSDefinition
-    ,syncedWSCommandIn      :: !(MVar.MVar ClusterTONodeCommands)
+     syncedWSPID            :: !ThreadId                          -- ^ process ID after fork
+    ,syncedWSName           :: !SyncedWSNodeName                  -- ^ name of the websocket given by the user
+    ,syncedCommunicationOut :: !(Chan.TChan BL.ByteString)        -- ^ channel which the websocket uses to communicate incoming messages
+    ,syncedCommandOut       :: !(MVar.MVar SyncedWSNodeCommands) -- ^ channel to allow to give commands to the cluster
+    ,syncedWSDefinition     :: !WSDefinition                      -- ^ the definition of the node. Used by the cluster to create the new instance
+    ,syncedWSCommandIn      :: !(MVar.MVar ClusterTONodeCommands) -- ^ channel to talk to the node.
+    ,syncedWSSem            :: !Sem.QSem                          -- ^ Sem for awaiting worker thread killing
 }
 
-data SyncedWSNodeCommands = RestartNode ThreadId | ShutdownNode | RestartAll
+data SyncedWSNodeCommands = RestartNode ThreadId | ShutdownNode | RestartAll | WorkerStarted
 data ClusterTONodeCommands = Exit deriving (Show)
 
 data WSDefinition = WSMinimalDefinition {
@@ -68,7 +64,7 @@ data WSDefinition = WSMinimalDefinition {
      wsHost  :: !String
     ,wsPath  :: !String
     ,wsPort  :: !NS.PortNumber
-    ,outChan :: !(Chan.Chan BL.ByteString)
+    ,outChan :: !(Chan.TChan BL.ByteString)
     ,wsOnOpen :: !OnWSOpen
 }
 

@@ -2,6 +2,8 @@ module Exchange.Binance.Utils (
        parseBinanceMessage
       ,subscribeToDepthBook
       ,subscribeToFees
+      ,channels
+      ,websocketHost
 ) where
 
 import qualified Control.Concurrent.MVar as MVar
