@@ -1,6 +1,7 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances #-}
 module Exchange.Network.Sync.ChanPipe (
        DeduplicationTState(..)
       ,SimpleTState(..)
@@ -9,13 +10,13 @@ module Exchange.Network.Sync.ChanPipe (
       ,UpdateTransformerState
       ,WriteOut
 
-      ,filteredChan
       ,pipe
       ,pipeChan
-      ,runFilteredChan
-      ,runFilteredChanAsync
       ,runPipedChan
       ,runPipedChanAsync
+      ,runTransformedChan
+      ,runTransformedChanAsync
+      ,transformedChan
       ,updateTState
       ,writeOut
 ) where
@@ -39,6 +40,12 @@ import Exchange.Bitstamp.Utils as BIT
 
 data TransformerData a = TransformerData a deriving (Show)
 
+{- | Can be used as a short time memory. Messages can be sent or not based on maybe -}
+data SimpleTState a = SimpleTState (Maybe a) deriving (Show)
+
+{- | Simple data structure for deduplication of messages in a Chan. (Long term memory based on a map)-}
+data DeduplicationTState a = (Ord a, Show a) => DeduplicationTState (Maybe a) (Map.Map a a)
+
 {- | takes the TransformerData buffer a Chan and allows you to write to the output channel (not mandatory).
      returns a new TransformerData state
 -}
@@ -54,19 +61,17 @@ class (UpdateTransformerState i t, WriteOut t o) => Transformer i t o where
     pipe input outChan tr = (updateTState tr input) >>= (writeOut outChan)
 
 
-{- | Pipes messages from a source to a sink and transforms the data in-between -}
-filteredChan :: (WriteOut t o, UpdateTransformerState i t) => Chan.TChan i -> Chan.TChan o -> TransformerData t -> IO (TransformerData t)
-filteredChan source sink tdState = (atomically (Chan.readTChan source)) >>= (updateTState tdState) >>= (writeOut sink)
+transformedChan :: (Transformer i t o) => Chan.TChan i -> Chan.TChan o -> TransformerData t -> IO (TransformerData t)
+transformedChan source sink tState = (atomically (Chan.readTChan source)) >>= (\msg -> pipe msg sink tState)
 
-{- | Runs a filtered channel composite. Run it in a thread or otherwise it will block -}
-runFilteredChan :: IO (TransformerData t) -> IO ()
-runFilteredChan fChan = fChan >> runFilteredChan fChan
+runTransformedChan :: IO (TransformerData t) -> IO ()
+runTransformedChan transformedChan = transformedChan >> runTransformedChan transformedChan
 
-runFilteredChanAsync :: IO (TransformerData t) -> IO (ThreadId, Sem.QSem)
-runFilteredChanAsync filteredChan = do
-                              sem <- Sem.newQSem 0
-                              tid <- forkFinally (runFilteredChan filteredChan) (\_ -> putStrLn "killing async piped chan\n" >> Sem.signalQSem sem)
-                              return (tid, sem)
+runTransformedChanAsync :: IO (TransformerData t) -> IO (ThreadId, Sem.QSem)
+runTransformedChanAsync transformedChan = do
+                            sem <- Sem.newQSem 0
+                            tid <- forkFinally (runTransformedChan transformedChan) (\ _ -> Sem.signalQSem sem)
+                            return (tid, sem)
 
 {- | Piping from source to sink. Blocking IO action -}
 pipeChan :: Chan.TChan a -> Chan.TChan a -> IO ()
@@ -83,28 +88,37 @@ runPipedChanAsync pipedChan = do
                               tid <- forkFinally (runPipedChan pipedChan) (\_ -> putStrLn "killing async piped chan\n" >> Sem.signalQSem sem)
                               return (tid, sem)
 
-{- | Simple data structure for deduplication of messages in a Chan -}
-data DeduplicationTState = DeduplicationTState (Maybe BL.ByteString) (Map.Map BL.ByteString BL.ByteString) deriving (Show)
-
-instance WriteOut DeduplicationTState BL.ByteString where
+{- Deduplication Instances -}
+instance WriteOut (DeduplicationTState a) a where
     writeOut chan (TransformerData (DeduplicationTState (Just msg) lookupMap)) = atomically (Chan.writeTChan chan msg) >> return (TransformerData $ DeduplicationTState Nothing (Map.insert msg msg lookupMap))
     writeOut chan (TransformerData (DeduplicationTState _ lookupMap))          = return $ TransformerData $ DeduplicationTState Nothing lookupMap
 
-instance UpdateTransformerState BL.ByteString DeduplicationTState where
+instance UpdateTransformerState a (DeduplicationTState a) where
     updateTState (TransformerData (DeduplicationTState _ lookupMap)) bs = case Map.lookup bs lookupMap of
                                                                    (Just red) -> putStrLn ("PURGING REDUNDANT MESSAGE:\t" ++ (show red)) >> return (TransformerData $ DeduplicationTState Nothing lookupMap)
                                                                    Nothing    -> return $ TransformerData $ DeduplicationTState (Just bs) lookupMap
 
-instance Transformer BL.ByteString DeduplicationTState BL.ByteString
+instance Transformer BL.ByteString (DeduplicationTState BL.ByteString) BL.ByteString
 
 
-data SimpleTState = SimpleTState (Maybe BL.ByteString) deriving (Show)
+{- SimpleTState Instances -}
+instance UpdateTransformerState a (SimpleTState a) where
+    updateTState (TransformerData _) newBs = return (TransformerData (SimpleTState (Just newBs)))
 
-instance UpdateTransformerState BL.ByteString SimpleTState where
-    updateTState (TransformerData (SimpleTState _)) newBs = return (TransformerData (SimpleTState (Just newBs)))
+instance WriteOut (SimpleTState a) a where
+    writeOut chan (TransformerData (SimpleTState (Just msg))) = atomically (Chan.writeTChan chan msg) >> return (TransformerData (SimpleTState Nothing))
+    writeOut chan (TransformerData (SimpleTState Nothing)) = return (TransformerData (SimpleTState Nothing))
 
-instance WriteOut SimpleTState BL.ByteString where
-    writeOut chan (TransformerData (SimpleTState (Just msg))) = atomically (Chan.writeTChan chan msg) >> return (TransformerData $ SimpleTState Nothing)
-    writeOut chan (TransformerData (SimpleTState _))   = return $ TransformerData $ SimpleTState Nothing
+{- no need for defining class instances if all the instances are of the same type -}
+instance Transformer BL.ByteString (SimpleTState BL.ByteString) BL.ByteString
+instance Transformer Int (SimpleTState Int) Int
 
-instance Transformer BL.ByteString SimpleTState BL.ByteString
+{- needs custom instances for UpdateTState and WriteOut since not all type instances are of the same type-}
+instance Transformer BL.ByteString (SimpleTState Int) BL.ByteString
+
+instance UpdateTransformerState BL.ByteString (SimpleTState Int) where
+    updateTState _ newBs = return (TransformerData (SimpleTState (Just (read (show newBs)))))
+
+instance WriteOut (SimpleTState Int) BL.ByteString where
+    writeOut chan (TransformerData (SimpleTState (Just msg))) = atomically (Chan.writeTChan chan (BL8.pack (show msg))) >> return (TransformerData (SimpleTState Nothing))
+    writeOut chan (TransformerData (SimpleTState Nothing)) = return (TransformerData (SimpleTState Nothing))
