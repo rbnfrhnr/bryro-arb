@@ -4,11 +4,13 @@
 module Exchange.Network.Sync.ChanPipe (
        DeduplicationTState(..)
       ,SimpleTState(..)
+      ,Transformer
       ,TransformerData(..)
       ,UpdateTransformerState
       ,WriteOut
 
       ,filteredChan
+      ,pipe
       ,pipeChan
       ,runFilteredChan
       ,runFilteredChanAsync
@@ -40,12 +42,16 @@ data TransformerData a = TransformerData a deriving (Show)
 {- | takes the TransformerData buffer a Chan and allows you to write to the output channel (not mandatory).
      returns a new TransformerData state
 -}
-class WriteOut a b where
-    writeOut :: Chan.TChan b -> TransformerData a  -> IO (TransformerData a)
+class WriteOut t b where
+    writeOut :: Chan.TChan b -> TransformerData t  -> IO (TransformerData t)
 
 {- | Typeclass for transforming an incoming message. Acts as a buffer before writing to the output channel. -}
 class UpdateTransformerState a t where
     updateTState :: TransformerData t -> a -> IO (TransformerData t)
+
+class (UpdateTransformerState i t, WriteOut t o) => Transformer i t o where
+    pipe :: i -> Chan.TChan o -> TransformerData t -> IO (TransformerData t)
+    pipe input outChan tr = (updateTState tr input) >>= (writeOut outChan)
 
 
 {- | Pipes messages from a source to a sink and transforms the data in-between -}
@@ -89,6 +95,8 @@ instance UpdateTransformerState BL.ByteString DeduplicationTState where
                                                                    (Just red) -> putStrLn ("PURGING REDUNDANT MESSAGE:\t" ++ (show red)) >> return (TransformerData $ DeduplicationTState Nothing lookupMap)
                                                                    Nothing    -> return $ TransformerData $ DeduplicationTState (Just bs) lookupMap
 
+instance Transformer BL.ByteString DeduplicationTState BL.ByteString
+
 
 data SimpleTState = SimpleTState (Maybe BL.ByteString) deriving (Show)
 
@@ -98,3 +106,5 @@ instance UpdateTransformerState BL.ByteString SimpleTState where
 instance WriteOut SimpleTState BL.ByteString where
     writeOut chan (TransformerData (SimpleTState (Just msg))) = atomically (Chan.writeTChan chan msg) >> return (TransformerData $ SimpleTState Nothing)
     writeOut chan (TransformerData (SimpleTState _))   = return $ TransformerData $ SimpleTState Nothing
+
+instance Transformer BL.ByteString SimpleTState BL.ByteString
