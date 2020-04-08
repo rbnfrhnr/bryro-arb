@@ -42,9 +42,16 @@ data Order = AskOrder BaseOrder
             deriving (Show, Generic)
 
 instance ToJSON Order
+instance FromJSON Order
+
 instance ToJSON BaseOrder
+instance FromJSON BaseOrder
+
 instance ToJSON CurrencyPair
+instance FromJSON CurrencyPair
+
 instance ToJSON Exchange
+instance FromJSON Exchange
 
 data CurrencyPair = LTCUSD | XRPUSD | ETHUSD | BCHUSD deriving (Show, Generic)
 

@@ -2,6 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Influx (
        InfluxConfig(..)
+      ,InfluxConnection(..)
       ,InfluxData
       ,createInfluxConfig
       ,getConnection

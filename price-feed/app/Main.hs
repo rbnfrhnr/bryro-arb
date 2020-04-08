@@ -33,12 +33,12 @@ import Influx as Influx
 import Kafka as Kafka
 
 
-configFile :: FilePath -> [Worth FilePath]
-configFile name = [Required $ "resources" </> name]
+configFile :: IO (Either SomeException Config)
+configFile = try $ load [Required $ "resources" </> "config.cfg"]
 
 main :: IO ()
 main = do
-       mb <- try $ load (configFile "config.cfg")
+       mb <- configFile
        case mb of
            Left (err :: SomeException) -> Prelude.putStrLn $ show err
            Right cfg -> runFeed cfg
