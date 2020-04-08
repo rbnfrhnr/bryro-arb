@@ -1,19 +1,18 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
+import qualified Data.ByteString as BS
+import qualified Data.ByteString.Lazy as BL
 import Control.Concurrent
 import Control.Exception
 import Control.Monad
 import Data.Aeson
-import qualified Data.ByteString as BS
-import qualified Data.ByteString.Lazy as BL
 import Data.Configurator
 import Data.Configurator.Types
 import System.FilePath
 import Utils.Influx as Influx
 import Utils.Kafka as Kafka
 import Network.Kafka
-import Network.Kafka.Protocol
 import Network.Kafka.Producer
 import System.IO
 import Finance.Types
