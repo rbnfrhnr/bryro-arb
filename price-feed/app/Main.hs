@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE FlexibleInstances #-}
 module Main where
 
 import Prelude hiding (lookup)
@@ -17,7 +18,6 @@ import Data.Time
 import Data.Text
 import Data.Time.Clock
 import Data.Time.Clock.POSIX
-import Network.Kafka.Producer
 import Database.InfluxDB
 import qualified Database.InfluxDB.Format as F
 import Finance.Types
@@ -29,8 +29,11 @@ import System.Directory
 import System.Environment
 import Control.Exception
 import Control.Monad
-import Influx as Influx
-import Kafka as Kafka
+import Utils.Kafka as Kafka
+import Utils.Influx as Influx
+import Network.Kafka
+import Network.Kafka.Protocol
+import Network.Kafka.Producer
 
 
 configFile :: IO (Either SomeException Config)
@@ -53,16 +56,22 @@ runFeed cfg = do
               Binance.subscribeToDepthBook $ orderFeedHandler orderQueue Binance.parseBinanceMessage
               Kraken.subscribeToDepthBook $ orderFeedHandler orderQueue Kraken.parseKrakenMessage
 
-              kafkaConn <- Kafka.getConnection cfg
+              writeKafkaST <- fmap (\kafkaCfg -> writeKafkaState (Kafka.configToKafkaState kafkaCfg) "bryro-orders" 1) (Kafka.createKafkaConfig cfg)
               influxConn <- Influx.getConnection cfg
 
-              let worker queue influxConn kafkaConn = do
+              let worker queue influxConn writeKafkaST = do
                                       orders <- Chan.readChan queue
                                       {- todo can most definitely be made into one fold -}
+                                      writeKafkaST2 <- writeToKafka kafkaRespHandler writeKafkaST orders
                                       influxConn2 <- foldM (writeToInflux) influxConn orders
-                                      kafkaConn2 <- foldM writeToKafka kafkaConn orders
-                                      worker queue influxConn2 kafkaConn2
-              worker orderQueue influxConn kafkaConn
+                                      worker queue influxConn2 writeKafkaST2
+              worker orderQueue influxConn writeKafkaST
+
+kafkaRespHandler :: Either KafkaClientError [ProduceResponse] -> IO ()
+kafkaRespHandler (Right msgs) = Prelude.putStrLn $ show msgs
+kafkaRespHandler (Left err) = Prelude.putStrLn $ show err
+
+
 
 instance InfluxData Order where
     toInfluxLine (AskOrder (BaseOrder exchange currency price quantity time)) = constructLine "Ask" exchange currency price quantity time
@@ -75,5 +84,5 @@ constructLine orderType exchange currency price quantity time = Line "order" tag
                                                                     utcTime         = posixSecondsToUTCTime $ realToFrac $ (fromIntegral time) / (1000 * 1000)
                                                                     stringFormatter = formatKey F.string
 
-instance KafkaData Order where
+instance KafkaData [Order] where
     toKafkaData order =  makeMessage $ BL.toStrict $ Aeson.encode order
