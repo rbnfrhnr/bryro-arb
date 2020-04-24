@@ -43,7 +43,7 @@ main :: IO ()
 main = do
        mb <- configFile
        case mb of
-           Left (err :: SomeException) -> Prelude.putStrLn $ show err
+           Left (err :: SomeException) -> print err
            Right cfg -> runFeed cfg
 
 
@@ -63,13 +63,13 @@ runFeed cfg = do
                                       orders <- Chan.readChan queue
                                       {- todo can most definitely be made into one fold -}
                                       writeKafkaST2 <- writeToKafka kafkaRespHandler writeKafkaST orders
-                                      influxConn2 <- foldM (writeToInflux) influxConn orders
+                                      influxConn2 <- foldM writeToInflux influxConn orders
                                       worker queue influxConn2 writeKafkaST2
               worker orderQueue influxConn writeKafkaST
 
 kafkaRespHandler :: Either KafkaClientError [ProduceResponse] -> IO ()
-kafkaRespHandler (Right msgs) = Prelude.putStrLn $ show msgs
-kafkaRespHandler (Left err) = Prelude.putStrLn $ show err
+kafkaRespHandler (Right msgs) = return ()
+kafkaRespHandler (Left err) = print err
 
 
 
