@@ -10,6 +10,9 @@ module Finance.Types
   , Tick(..)
   , UpdateTick
   , getCurrencyPair
+  , getExchangeFromOrder
+  , getPriceFromOrder
+  , getQtyFromOrder
   , updateTick
   ) where
 
@@ -83,10 +86,10 @@ instance Ord CurrencyPair where
 
 {- | A prices equality is defined solely bi its price offered at an exchange -}
 instance Eq Order where
-    (==) (AskOrder (BaseOrder _ _ price _ _)) (AskOrder (BaseOrder _ _ price2 _ _)) = (==) price price2
-    (==) (AskOrder (BaseOrder _ _ price _ _)) (BidOrder (BaseOrder _ _ price2 _ _)) = (==) price price2
-    (==) (BidOrder (BaseOrder _ _ price _ _)) (AskOrder (BaseOrder _ _ price2 _ _)) = (==) price price2
-    (==) (BidOrder (BaseOrder _ _ price _ _)) (BidOrder (BaseOrder _ _ price2 _ _)) = (==) price price2
+  (==) (AskOrder (BaseOrder _ _ price _ _)) (AskOrder (BaseOrder _ _ price2 _ _)) = (==) price price2
+  (==) (AskOrder (BaseOrder _ _ price _ _)) (BidOrder (BaseOrder _ _ price2 _ _)) = (==) price price2
+  (==) (BidOrder (BaseOrder _ _ price _ _)) (AskOrder (BaseOrder _ _ price2 _ _)) = (==) price price2
+  (==) (BidOrder (BaseOrder _ _ price _ _)) (BidOrder (BaseOrder _ _ price2 _ _)) = (==) price price2
 
 {- | Prices are ordered by their currently offered price at an exchange -}
 instance Ord Order where
@@ -113,6 +116,18 @@ getCurrencyPair :: Order -> CurrencyPair
 getCurrencyPair (AskOrder (BaseOrder _ pair _ _ _)) = pair
 getCurrencyPair (BidOrder (BaseOrder _ pair _ _ _)) = pair
 
+getExchangeFromOrder :: Order -> Exchange
+getExchangeFromOrder (AskOrder order) = orderExchange order
+getExchangeFromOrder (BidOrder order) = orderExchange order
+
+getPriceFromOrder :: Order -> Double
+getPriceFromOrder (AskOrder order) = orderCurrentPrice order
+getPriceFromOrder (BidOrder order) = orderCurrentPrice order
+
+getQtyFromOrder :: Order -> Double
+getQtyFromOrder (AskOrder order) = orderQuantity order
+getQtyFromOrder (BidOrder order) = orderQuantity order
+
 data Tick =
   Tick
     { tickAsk :: !(Maybe Order)
@@ -128,10 +143,10 @@ instance FromJSON Tick
 instance ToJSON Tick
 
 instance UpdateTick Order where
-  updateTick order@(AskOrder bo) (Tick _ bidTick ) = Tick (Just order) bidTick
+  updateTick order@(AskOrder bo) (Tick _ bidTick) = Tick (Just order) bidTick
     where
       ts = orderTimestamp bo
-  updateTick order@(BidOrder bo) (Tick askTick _ ) = Tick askTick (Just order)
+  updateTick order@(BidOrder bo) (Tick askTick _) = Tick askTick (Just order)
     where
       ts = orderTimestamp bo
 
