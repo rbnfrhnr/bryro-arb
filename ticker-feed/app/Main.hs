@@ -41,7 +41,6 @@ main = configFileKafka >>= withConfig
 withConfig :: Either SomeException Config -> IO ()
 withConfig (Right cfg) = do
   kafkaState <- liftM Kafka.configToKafkaState (Kafka.createKafkaConfig cfg)
-  influxConn <- Influx.getConnection cfg
   runTransform (readKafkaState kafkaState "bryro-orders" 0 0) (writeKafkaState kafkaState "bryro-ticker" 0) Map.empty
 
 runTransform :: ReadKafka -> WriteKafka -> DBookMap -> IO ()

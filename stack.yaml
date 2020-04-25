@@ -1,0 +1,12 @@
+resolver: lts-14.7
+
+packages:
+  - finance/
+  - exchange/
+  - utils/
+  - price-feed/
+  - ticker-feed/
+
+extra-deps:
+  - milena-0.5.4.0@sha256:8d9f89ce25656f96b4741875ce0f9e876e6000c816d2c5ad0244fec2d627996e,2587
+  - bytestring-show-0.3.5.6@sha256:a923f5b218cbfc39a6fea6e8d5cb09bb96373e4b2ca8dfd11b1c05253088d858,1505

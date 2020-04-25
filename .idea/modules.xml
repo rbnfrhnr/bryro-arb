@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/bryro_arb.iml" filepath="$PROJECT_DIR$/.idea/bryro_arb.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/bryro-arb.iml" filepath="$PROJECT_DIR$/.idea/bryro-arb.iml" />
       <module fileurl="file://$PROJECT_DIR$/exchange/exchange.iml" filepath="$PROJECT_DIR$/exchange/exchange.iml" />
       <module fileurl="file://$PROJECT_DIR$/finance/finance.iml" filepath="$PROJECT_DIR$/finance/finance.iml" />
       <module fileurl="file://$PROJECT_DIR$/price-feed/price-feed.iml" filepath="$PROJECT_DIR$/price-feed/price-feed.iml" />
