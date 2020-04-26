@@ -20,20 +20,9 @@ import           Network.Kafka
 import           Network.Kafka.Producer
 import           System.FilePath
 import           System.IO
+import           Ticker.Utils
 import           Utils.Influx            as Influx
 import           Utils.Kafka             as Kafka
-
-instance KafkaData (Maybe Order, Maybe Order) where
-  toKafkaData tick = makeMessage $ BL.toStrict $ encode tick
-
-type CurrencyExchangeKey = String
-
-type DBookMap = Map.Map CurrencyExchangeKey DepthBook
-
-type TickBuffer = Map.Map CurrencyExchangeKey (Maybe Order, Maybe Order)
-
-toCurrencyExchangeKey :: Order -> String
-toCurrencyExchangeKey order = show (getCurrencyPair order) ++ show (getExchangeFromOrder order)
 
 configFileKafka :: IO (Either SomeException Config)
 configFileKafka = try $ load [Required $ "ticker-feed" </> "resources" </> "config.cfg"]
@@ -52,11 +41,17 @@ withConfig (Right cfg) = do
 
 runTransform :: ReadKafka -> WriteKafka -> TickBuffer -> DBookMap -> IO ()
 runTransform rKafka wKafka tickBuffer dBookMap =
-  Kafka.readFromKafka rKafka >>= decodeOrders >>= return . foldl handleDepthBook dBookMap >>= printLowestAsk >>=
-  runTransform rKafka wKafka tickBuffer >>
+  Kafka.readFromKafka rKafka >>= decodeOrders >>= return . foldl handleDepthBook dBookMap >>=
+  (\bookMap ->
+     foldM
+       (\(_, tBuffer) key ->
+          bufferedWrite wKafka (Map.lookup key tickBuffer) (Map.lookup key dBookMap) >>=
+          (\nTick -> return (bookMap, Map.insert key nTick tBuffer)))
+       (bookMap, tickBuffer)
+       (Map.keys bookMap)) >>=
+  (\(bookM, tiBuffer) -> runTransform rKafka wKafka tiBuffer bookM) >>
   return ()
 
---  Kafka.readFromKafka rKafka >>= decodeOrders >>= return . foldl handleDepthBook dBookMap >>= runTransform rKafka wKafka >>
 handleDepthBook :: DBookMap -> Order -> DBookMap
 handleDepthBook dBookMap order =
   case Map.lookup currencyExchangeKey dBookMap of
@@ -65,22 +60,22 @@ handleDepthBook dBookMap order =
   where
     currencyExchangeKey = toCurrencyExchangeKey order
 
-bufferedWrite :: WriteKafka -> Maybe (Maybe Order, Maybe Order) -> DepthBook -> IO (Maybe Order, Maybe Order)
-bufferedWrite wKafka (Just (lastAsk, lastBid)) book
-  | (lastAsk, lastBid) /= tickPair = Kafka.writeToKafka (\_ -> return ()) wKafka tickPair >> return tickPair
+bufferedWrite :: WriteKafka -> Maybe (Maybe Order, Maybe Order) -> Maybe DepthBook -> IO (Maybe Order, Maybe Order)
+bufferedWrite wKafka (Just (lastAsk, lastBid)) (Just book)
+  | (lastAsk, lastBid) /= tickPair =
+    Kafka.writeToKafka (\msg -> print msg >> hFlush stdout) wKafka tickPair >> return tickPair
+  | otherwise = return (lastAsk, lastBid)
   where
     minAsk = fmap snd (Map.lookupMin (depthBookAsk book))
     maxBid = fmap snd (Map.lookupMax (depthBookBid book))
     tickPair = (minAsk, maxBid)
+bufferedWrite wKafka Nothing (Just book) = Kafka.writeToKafka (\msg -> print msg >> hFlush stdout) wKafka tickPair >> return tickPair
+  where
+    minAsk = fmap snd (Map.lookupMin (depthBookAsk book))
+    maxBid = fmap snd (Map.lookupMax (depthBookBid book))
+    tickPair = (minAsk, maxBid)
+bufferedWrite wKafka lastTick book = return (Nothing, Nothing)
 
-printLowestAsk :: DBookMap -> IO DBookMap
-printLowestAsk bookMap =
-  Map.traverseWithKey
-    (\key dbook ->
-       print (fmap ((++) (key ++ "  ") . show . getPriceFromOrder . snd) (Map.lookupMin (depthBookAsk dbook))) >>
-       hFlush stdout >>
-       return dbook)
-    bookMap
 
 decodeOrders :: Either KafkaClientError [BS.ByteString] -> IO [Order]
 decodeOrders (Right msg) = return (foldl filteredDecode [] msg) :: IO [Order]
