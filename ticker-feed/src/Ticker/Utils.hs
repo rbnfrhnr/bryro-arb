@@ -4,6 +4,7 @@ module Ticker.Utils
   ( CurrencyExchangeKey
   , DBookMap
   , TickBuffer
+  , printTickFiltered
   , printLowestAsk
   , toCurrencyExchangeKey
   ) where
@@ -38,3 +39,19 @@ printLowestAsk bookMap =
        hFlush stdout >>
        return dbook)
     bookMap
+
+printTickFiltered :: Maybe CurrencyExchangeKey -> (Maybe Order, Maybe Order) -> IO ()
+printTickFiltered Nothing tick = printTick tick
+printTickFiltered (Just currExchangeKey) (Just ask, Just bid)
+  | currExchangeKey == toCurrencyExchangeKey ask = printTick (Just ask, Just bid)
+  | otherwise = return ()
+printTickFiltered _ _ = return ()
+
+printTick :: (Maybe Order, Maybe Order) -> IO ()
+printTick (Just ask, Just bid) =
+  putStrLn
+    (show (getExchangeFromOrder ask) ++
+     " -> " ++
+     show (getCurrencyPair ask) ++ " - " ++ show (getPriceFromOrder ask) ++ " / " ++ show (getPriceFromOrder bid)) >>
+  hFlush stdout
+printTick _ = return ()
