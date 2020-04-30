@@ -1,6 +1,6 @@
 module Exchange.Binance.Utils
   ( parseBinanceMessage
-  , subscribeToDepthBook
+  , subscribeReadonly
   ) where
 
 import qualified Control.Concurrent.Chan             as C
@@ -24,7 +24,10 @@ websocketHost = "stream.binance.com"
 channels :: String
 channels = "ltcusdt@depth@100ms/xrpusdt@depth@100ms/ethusdt@depth@100ms/bchusdt@depth@100ms"
 
-{- | Websocket worker which receives the order-book updates-}
-subscribeToDepthBook :: (BL.ByteString -> IO ()) -> IO ()
-subscribeToDepthBook partialHandler =
-  Socket.runSecureClient websocketHost ("/ws/" ++ channels) 9443 partialHandler (\x -> return ())
+{- | Websocket worker which receives the order-book updates. readonly and no way to interfere with the connection -}
+subscribeReadonly :: (BL.ByteString -> IO ()) -> IO ()
+subscribeReadonly withMessage = subscribeHandler (\_ msg -> withMessage msg)
+
+{- | Websocket worker which allows to interact with the exchange -}
+subscribeHandler :: Socket.WebsocketMessageHandler -> IO ()
+subscribeHandler handler = Socket.runSecureClient websocketHost ("/ws/" ++ channels) 9443 handler (\x -> return ())

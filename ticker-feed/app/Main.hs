@@ -39,9 +39,9 @@ withConfig :: Either SomeException Config -> IO ()
 withConfig (Right cfg) = do
   kafkaState <- fmap Kafka.configToKafkaState (Kafka.createKafkaConfig cfg)
   orderQueue <- Chan.newChan
-  Bitstamp.subscribeToDepthBook $ orderFeedHandler orderQueue Bitstamp.parseBitstampMessage
-  Binance.subscribeToDepthBook $ orderFeedHandler orderQueue Binance.parseBinanceMessage
-  Kraken.subscribeToDepthBook $ orderFeedHandler orderQueue Kraken.parseKrakenMessage
+  Bitstamp.subscribeReadonly $ orderFeedHandler orderQueue Bitstamp.parseBitstampMessage
+  Binance.subscribeReadonly $ orderFeedHandler orderQueue Binance.parseBinanceMessage
+  Kraken.subscribeReadonly $ orderFeedHandler orderQueue Kraken.parseKrakenMessage
   runTransform orderQueue (writeKafkaState kafkaState "bryro-ticker" 0) Map.empty Map.empty
 
 runTransform :: Chan.Chan [Order] -> WriteKafka -> TickBuffer -> DBookMap -> IO ()

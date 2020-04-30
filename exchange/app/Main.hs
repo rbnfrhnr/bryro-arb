@@ -15,9 +15,9 @@ main :: IO ()
 main = do
   orderQueue <- newChan
   putStrLn "Starting to subscribe to depthbooks" >> hFlush stdout
-  Bitstamp.subscribeToDepthBook $ defaultHandler orderQueue $ fmap (fmap show) Bitstamp.parseBitstampMessage
-  Kraken.subscribeToDepthBook $ defaultHandler orderQueue $ fmap (fmap show) Kraken.parseKrakenMessage
-  Binance.subscribeToDepthBook $ defaultHandler orderQueue $ fmap (fmap show) Binance.parseBinanceMessage
+  Bitstamp.subscribeReadonly $ defaultHandler orderQueue $ fmap (fmap show) Bitstamp.parseBitstampMessage
+  Kraken.subscribeReadonly $ defaultHandler orderQueue $ fmap (fmap show) Kraken.parseKrakenMessage
+  Binance.subscribeReadonly $ defaultHandler orderQueue $ fmap (fmap show) Binance.parseBinanceMessage
   worker orderQueue
 
 worker :: (Show a) => Chan a -> IO ()

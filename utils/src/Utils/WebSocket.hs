@@ -1,5 +1,9 @@
 module Utils.WebSocket
   ( runSecureClient
+  , Host
+  , WebsocketMessageHandler
+  , OnConnect
+  , Path
   ) where
 
 import qualified Control.Exception             as E
@@ -19,19 +23,19 @@ type Host = String
 
 type Path = String
 
-type MessageHandler = (BL.ByteString -> IO ())
+type WebsocketMessageHandler = W.Connection -> BL.ByteString -> IO ()
 
 type OnConnect = (W.Connection -> IO ())
 
 {- endpoint, port, queue, function applied at con open -}
-runSecureClient :: Host -> Path -> PortNumber -> MessageHandler -> OnConnect -> IO ()
+runSecureClient :: Host -> Path -> PortNumber -> WebsocketMessageHandler -> OnConnect -> IO ()
 runSecureClient host path port onMessage onOpen = do
   context <- C.initConnectionContext
   connection <- C.connectTo context (connectionParams host port)
   stream <- Stream.makeStream (reader connection) (writer connection)
   newCon <- WS.newClientConnection stream host path connectionOptions []
   onOpen newCon
-  forkIO $ worker newCon onMessage
+  forkIO $ worker newCon (onMessage newCon)
   return ()
 
 worker :: W.Connection -> (BL.ByteString -> IO ()) -> IO ()

@@ -53,9 +53,9 @@ runFeed cfg = do
               Prelude.putStrLn "Started order-feed"
               orderQueue <- newChan
 
-              Bitstamp.subscribeToDepthBook $ orderFeedHandler orderQueue Bitstamp.parseBitstampMessage
-              Binance.subscribeToDepthBook $ orderFeedHandler orderQueue Binance.parseBinanceMessage
-              Kraken.subscribeToDepthBook $ orderFeedHandler orderQueue Kraken.parseKrakenMessage
+              Bitstamp.subscribeReadonly $ orderFeedHandler orderQueue Bitstamp.parseBitstampMessage
+              Binance.subscribeReadonly $ orderFeedHandler orderQueue Binance.parseBinanceMessage
+              Kraken.subscribeReadonly $ orderFeedHandler orderQueue Kraken.parseKrakenMessage
 
               writeKafkaST <- fmap (\kafkaCfg -> writeKafkaState (Kafka.configToKafkaState kafkaCfg) "bryro-orders" 1) (Kafka.createKafkaConfig cfg)
               influxConn <- Influx.getConnection cfg

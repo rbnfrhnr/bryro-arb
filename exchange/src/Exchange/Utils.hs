@@ -1,6 +1,5 @@
 module Exchange.Utils
   ( JsonDecoder
-  , MessageHandler
   , byteStringToDouble
   , byteStringToInteger
   , defaultHandler
@@ -24,8 +23,6 @@ import           Finance.Types
 import           System.IO
 
 type JsonDecoder a = (BL.ByteString -> Either String a) -- ^ will decode a bytestring into a datatype.
-
-type MessageHandler a = (C.Chan a -> JsonDecoder a -> BL.ByteString -> IO ()) -- ^ takes a queue, a jsondecoder (maps from bytestring to some datatype) a bytestring and will perform some IO action on the parsed message
 
 {- | Does not care about messages which should not be converted into orders... (will evaluate to empty array)
  Can be partially applied (Chan and JsonDecoder and the be used for feed subscription -}

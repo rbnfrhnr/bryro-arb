@@ -2,7 +2,7 @@
 
 module Exchange.Bitstamp.Utils
   ( parseBitstampMessage
-  , subscribeToDepthBook
+  , subscribeReadonly
   ) where
 
 import qualified Control.Concurrent.Chan              as C
@@ -14,8 +14,8 @@ import qualified Utils.WebSocket                      as Socket
 
 import           Control.Concurrent
 import           Exchange.Bitstamp.Contract.Websocket as BWS
-import           Exchange.Utils
 import           Exchange.Types
+import           Exchange.Utils
 import           Finance.Types
 import           Network.WebSockets
 
@@ -33,8 +33,11 @@ parseBitstampMessage msg = Aeson.eitherDecode msg :: Either String BWS.BitstampM
 websocketHost :: String
 websocketHost = "ws.bitstamp.net"
 
-subscribeToDepthBook :: (BL.ByteString -> IO ()) -> IO ()
-subscribeToDepthBook partialHandler = Socket.runSecureClient websocketHost "/" 443 partialHandler subscribe
+subscribeReadonly :: (BL.ByteString -> IO ()) -> IO ()
+subscribeReadonly withMessage = subscribeHandler (\_ msg -> withMessage msg)
+
+subscribeHandler :: Socket.WebsocketMessageHandler -> IO ()
+subscribeHandler handler = Socket.runSecureClient websocketHost "/" 443 handler subscribe
 
 subscribe :: Connection -> IO ()
 subscribe connection = foldl (\_ cts -> sendTextData connection (B.packChars cts)) (pure ()) orderChannelsToSubscribe

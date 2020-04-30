@@ -1,6 +1,6 @@
 module Exchange.Kraken.Utils
   ( parseKrakenMessage
-  , subscribeToDepthBook
+  , subscribeReadonly
   ) where
 
 import qualified Control.Concurrent.Chan            as C
@@ -13,8 +13,8 @@ import qualified System.IO                          as IO
 import qualified Utils.WebSocket                    as Socket
 
 import           Control.Concurrent
-import           Exchange.Utils
 import           Exchange.Types
+import           Exchange.Utils
 import           Finance.Types
 import           Network.WebSockets
 
@@ -25,8 +25,11 @@ websocketHost :: String
 websocketHost = "ws.kraken.com"
 
 {- | Websocket worker which receives the order-book updates-}
-subscribeToDepthBook :: (BL.ByteString -> IO ()) -> IO ()
-subscribeToDepthBook partialHandler = Socket.runSecureClient websocketHost "/" 443 partialHandler subscribe
+subscribeReadonly :: (BL.ByteString -> IO ()) -> IO ()
+subscribeReadonly withMessage = subscribeHandler (\_ msg -> withMessage msg)
+
+subscribeHandler :: Socket.WebsocketMessageHandler -> IO ()
+subscribeHandler handler = Socket.runSecureClient websocketHost "/" 443 handler subscribe
 
 subscribe :: Connection -> IO ()
 subscribe connection = sendTextData connection msg
