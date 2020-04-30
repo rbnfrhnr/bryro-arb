@@ -17,7 +17,7 @@ import           Data.Configurator.Types
 import           Exchange.Binance.Utils  as Binance
 import           Exchange.Bitstamp.Utils as Bitstamp
 import           Exchange.Kraken.Utils   as Kraken
-import           Exchange.Network.Utils
+import           Exchange.Utils
 import           Finance.Depthbook.Types
 import           Finance.Depthbook.Utils
 import           Finance.Types

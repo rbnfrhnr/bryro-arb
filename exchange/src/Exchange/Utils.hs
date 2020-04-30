@@ -1,4 +1,4 @@
-module Exchange.Network.Utils
+module Exchange.Utils
   ( JsonDecoder
   , MessageHandler
   , defaultHandler

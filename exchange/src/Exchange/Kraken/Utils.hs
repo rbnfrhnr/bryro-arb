@@ -13,7 +13,7 @@ import qualified System.IO                          as IO
 import qualified Utils.WebSocket                    as Socket
 
 import           Control.Concurrent
-import           Exchange.Network.Utils
+import           Exchange.Utils
 import           Exchange.Types
 import           Finance.Types
 import           Network.WebSockets

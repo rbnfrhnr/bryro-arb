@@ -9,7 +9,7 @@ import qualified Data.Aeson as Aeson
 import Exchange.Bitstamp.Utils as Bitstamp
 import Exchange.Binance.Utils as Binance
 import Exchange.Kraken.Utils as Kraken
-import Exchange.Network.Utils
+import Exchange.Utils
 import Control.Concurrent
 import Control.Concurrent.Chan as Chan
 import Data.ByteString
