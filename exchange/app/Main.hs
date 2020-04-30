@@ -1,8 +1,9 @@
 module Main where
 
+import qualified Control.Concurrent.MVar as MVar
+
 import           Control.Concurrent
 import           Control.Concurrent.Chan as Chan
-import qualified Control.Concurrent.MVar as MVar
 import           Exchange.Binance.Types
 import           Exchange.Binance.Utils  as Binance
 import           Exchange.Bitstamp.Types
