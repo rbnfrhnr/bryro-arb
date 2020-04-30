@@ -14,7 +14,6 @@ import qualified System.IO                          as IO
 import qualified Utils.WebSocket                    as Socket
 
 import           Control.Concurrent
-import           Exchange.Kraken.Decoder
 import           Exchange.Kraken.Types
 import           Exchange.Network.Utils
 import           Exchange.Types
