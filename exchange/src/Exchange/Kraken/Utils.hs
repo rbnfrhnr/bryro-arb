@@ -1,5 +1,7 @@
 module Exchange.Kraken.Utils
   ( parseKrakenMessage
+  , parseToOrder
+  , subscribeHandler
   , subscribeReadonly
   ) where
 
@@ -18,8 +20,11 @@ import           Exchange.Utils
 import           Finance.Types
 import           Network.WebSockets
 
+parseToOrder :: (BL.ByteString -> Either String [Order])
+parseToOrder = fmap toOrder . parseKrakenMessage
+
 parseKrakenMessage :: (BL.ByteString -> Either String KW.KrakenMessage)
-parseKrakenMessage msg = Aeson.eitherDecode msg :: Either String KW.KrakenMessage
+parseKrakenMessage = Aeson.eitherDecode
 
 websocketHost :: String
 websocketHost = "ws.kraken.com"
@@ -28,7 +33,7 @@ websocketHost = "ws.kraken.com"
 subscribeReadonly :: (BL.ByteString -> IO ()) -> IO ()
 subscribeReadonly withMessage = subscribeHandler (\_ msg -> withMessage msg)
 
-subscribeHandler :: Socket.WebsocketMessageHandler -> IO ()
+subscribeHandler :: Socket.WebsocketHandler -> IO ()
 subscribeHandler handler = Socket.runSecureClient websocketHost "/" 443 handler subscribe
 
 subscribe :: Connection -> IO ()

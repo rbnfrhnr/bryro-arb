@@ -2,6 +2,8 @@
 
 module Exchange.Bitstamp.Utils
   ( parseBitstampMessage
+  , parseToOrder
+  , subscribeHandler
   , subscribeReadonly
   ) where
 
@@ -27,8 +29,11 @@ orderChannelsToSubscribe =
   , "{\"event\": \"bts:subscribe\",\"data\": {\"channel\": \"diff_order_book_bchusd\"}}"
   ]
 
-parseBitstampMessage :: (BL.ByteString -> Either String BWS.BitstampMessage)
-parseBitstampMessage msg = Aeson.eitherDecode msg :: Either String BWS.BitstampMessage
+parseToOrder :: (BL.ByteString -> Either String [Order])
+parseToOrder = fmap toOrder . parseBitstampMessage
+
+parseBitstampMessage :: (BL.ByteString -> Either String BitstampMessage)
+parseBitstampMessage = Aeson.eitherDecode
 
 websocketHost :: String
 websocketHost = "ws.bitstamp.net"
@@ -36,7 +41,7 @@ websocketHost = "ws.bitstamp.net"
 subscribeReadonly :: (BL.ByteString -> IO ()) -> IO ()
 subscribeReadonly withMessage = subscribeHandler (\_ msg -> withMessage msg)
 
-subscribeHandler :: Socket.WebsocketMessageHandler -> IO ()
+subscribeHandler :: Socket.WebsocketHandler -> IO ()
 subscribeHandler handler = Socket.runSecureClient websocketHost "/" 443 handler subscribe
 
 subscribe :: Connection -> IO ()

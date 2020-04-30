@@ -1,5 +1,7 @@
 module Exchange.Binance.Utils
   ( parseBinanceMessage
+  , parseToOrder
+  , subscribeHandler
   , subscribeReadonly
   ) where
 
@@ -15,8 +17,11 @@ import           Exchange.Types
 import           Exchange.Utils
 import           Finance.Types
 
+parseToOrder :: (BL.ByteString -> Either String [Order])
+parseToOrder = fmap toOrder . parseBinanceMessage
+
 parseBinanceMessage :: (BL.ByteString -> Either String BinanceMessage)
-parseBinanceMessage msg = Aeson.eitherDecode msg :: Either String BinanceMessage
+parseBinanceMessage = Aeson.eitherDecode
 
 websocketHost :: String
 websocketHost = "stream.binance.com"
@@ -29,5 +34,5 @@ subscribeReadonly :: (BL.ByteString -> IO ()) -> IO ()
 subscribeReadonly withMessage = subscribeHandler (\_ msg -> withMessage msg)
 
 {- | Websocket worker which allows to interact with the exchange -}
-subscribeHandler :: Socket.WebsocketMessageHandler -> IO ()
+subscribeHandler :: Socket.WebsocketHandler -> IO ()
 subscribeHandler handler = Socket.runSecureClient websocketHost ("/ws/" ++ channels) 9443 handler (\x -> return ())

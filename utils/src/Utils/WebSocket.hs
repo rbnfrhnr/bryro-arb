@@ -1,7 +1,7 @@
 module Utils.WebSocket
   ( runSecureClient
   , Host
-  , WebsocketMessageHandler
+  , WebsocketHandler
   , OnConnect
   , Path
   ) where
@@ -23,28 +23,28 @@ type Host = String
 
 type Path = String
 
-type WebsocketMessageHandler = W.Connection -> BL.ByteString -> IO ()
+type WebsocketHandler = W.Connection -> BL.ByteString -> IO ()
 
 type OnConnect = (W.Connection -> IO ())
 
 {- endpoint, port, queue, function applied at con open -}
-runSecureClient :: Host -> Path -> PortNumber -> WebsocketMessageHandler -> OnConnect -> IO ()
+runSecureClient :: Host -> Path -> PortNumber -> WebsocketHandler -> OnConnect -> IO ()
 runSecureClient host path port onMessage onOpen = do
   context <- C.initConnectionContext
   connection <- C.connectTo context (connectionParams host port)
   stream <- Stream.makeStream (reader connection) (writer connection)
   newCon <- WS.newClientConnection stream host path connectionOptions []
   onOpen newCon
-  forkIO $ worker newCon (onMessage newCon)
+  forkIO $ worker newCon onMessage
   return ()
 
-worker :: W.Connection -> (BL.ByteString -> IO ()) -> IO ()
+worker :: W.Connection -> WebsocketHandler -> IO ()
 worker connection onMessage = do
   result <- E.try (WS.receiveDataMessage connection) :: IO (Either W.ConnectionException W.DataMessage)
   case result of
     Left ex -> print ("Exception in Websocket connection " ++ show ex) >> hFlush stdout >> worker connection onMessage
-    Right (W.Binary val) -> onMessage val >> worker connection onMessage
-    Right (W.Text val1 val2) -> onMessage val1 >> worker connection onMessage
+    Right (W.Binary val) -> onMessage connection val >> worker connection onMessage
+    Right (W.Text val1 val2) -> onMessage connection val1 >> worker connection onMessage
 
 {- connection config -}
 connectionParams :: String -> PortNumber -> C.ConnectionParams

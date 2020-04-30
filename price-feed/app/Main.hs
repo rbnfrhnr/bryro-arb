@@ -9,7 +9,7 @@ import qualified Data.Aeson as Aeson
 import Exchange.Bitstamp.Utils as Bitstamp
 import Exchange.Binance.Utils as Binance
 import Exchange.Kraken.Utils as Kraken
-import Exchange.Utils
+import Exchange.Handler
 import Control.Concurrent
 import Control.Concurrent.Chan as Chan
 import Data.ByteString
@@ -53,9 +53,9 @@ runFeed cfg = do
               Prelude.putStrLn "Started order-feed"
               orderQueue <- newChan
 
-              Bitstamp.subscribeReadonly $ orderFeedHandler orderQueue Bitstamp.parseBitstampMessage
-              Binance.subscribeReadonly $ orderFeedHandler orderQueue Binance.parseBinanceMessage
-              Kraken.subscribeReadonly $ orderFeedHandler orderQueue Kraken.parseKrakenMessage
+              Bitstamp.subscribeHandler $ decodeAndEnQueueHandler Bitstamp.parseToOrder orderQueue
+              Kraken.subscribeHandler $ decodeAndEnQueueHandler Kraken.parseToOrder orderQueue
+              Binance.subscribeHandler $ decodeAndEnQueueHandler Binance.parseToOrder orderQueue
 
               writeKafkaST <- fmap (\kafkaCfg -> writeKafkaState (Kafka.configToKafkaState kafkaCfg) "bryro-orders" 1) (Kafka.createKafkaConfig cfg)
               influxConn <- Influx.getConnection cfg

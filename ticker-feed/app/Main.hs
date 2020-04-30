@@ -16,8 +16,8 @@ import           Data.Configurator
 import           Data.Configurator.Types
 import           Exchange.Binance.Utils  as Binance
 import           Exchange.Bitstamp.Utils as Bitstamp
+import           Exchange.Handler
 import           Exchange.Kraken.Utils   as Kraken
-import           Exchange.Utils
 import           Finance.Depthbook.Types
 import           Finance.Depthbook.Utils
 import           Finance.Types
@@ -39,9 +39,9 @@ withConfig :: Either SomeException Config -> IO ()
 withConfig (Right cfg) = do
   kafkaState <- fmap Kafka.configToKafkaState (Kafka.createKafkaConfig cfg)
   orderQueue <- Chan.newChan
-  Bitstamp.subscribeReadonly $ orderFeedHandler orderQueue Bitstamp.parseBitstampMessage
-  Binance.subscribeReadonly $ orderFeedHandler orderQueue Binance.parseBinanceMessage
-  Kraken.subscribeReadonly $ orderFeedHandler orderQueue Kraken.parseKrakenMessage
+  Bitstamp.subscribeHandler $ decodeAndEnQueueHandler Bitstamp.parseToOrder orderQueue
+  Kraken.subscribeHandler $ decodeAndEnQueueHandler Kraken.parseToOrder orderQueue
+  Binance.subscribeHandler $ decodeAndEnQueueHandler Binance.parseToOrder orderQueue
   runTransform orderQueue (writeKafkaState kafkaState "bryro-ticker" 0) Map.empty Map.empty
 
 runTransform :: Chan.Chan [Order] -> WriteKafka -> TickBuffer -> DBookMap -> IO ()

@@ -1,9 +1,7 @@
 module Exchange.Utils
-  ( JsonDecoder
-  , byteStringToDouble
+  ( byteStringToDouble
   , byteStringToInteger
-  , defaultHandler
-  , orderFeedHandler
+  , printParseError
   , textArrayToStrict
   , textStrictToStrict
   , textToStrict
@@ -21,22 +19,6 @@ import           Data.ByteString
 import           Exchange.Types
 import           Finance.Types
 import           System.IO
-
-type JsonDecoder a = (BL.ByteString -> Either String a) -- ^ will decode a bytestring into a datatype.
-
-{- | Does not care about messages which should not be converted into orders... (will evaluate to empty array)
- Can be partially applied (Chan and JsonDecoder and the be used for feed subscription -}
-orderFeedHandler :: (ExchangeOrder a) => C.Chan [Order] -> JsonDecoder a -> BL.ByteString -> IO ()
-orderFeedHandler queue jsonDecoder msg =
-  case jsonDecoder msg of
-    Right orderMsg -> C.writeChan queue $ toOrder orderMsg
-    Left err       -> printParseError err msg
-
-defaultHandler :: C.Chan a -> JsonDecoder a -> BL.ByteString -> IO ()
-defaultHandler queue jsonDecoder msg =
-  case jsonDecoder msg of
-    Right parsedMsg -> C.writeChan queue parsedMsg
-    Left err        -> printParseError err msg
 
 printParseError :: String -> BL.ByteString -> IO ()
 printParseError err msg =

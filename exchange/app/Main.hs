@@ -6,6 +6,7 @@ import           Control.Concurrent
 import           Control.Concurrent.Chan as Chan
 import           Exchange.Binance.Utils  as Binance
 import           Exchange.Bitstamp.Utils as Bitstamp
+import           Exchange.Handler
 import           Exchange.Kraken.Utils   as Kraken
 import           Exchange.Utils
 import           Finance.Types
@@ -15,9 +16,9 @@ main :: IO ()
 main = do
   orderQueue <- newChan
   putStrLn "Starting to subscribe to depthbooks" >> hFlush stdout
-  Bitstamp.subscribeReadonly $ defaultHandler orderQueue $ fmap (fmap show) Bitstamp.parseBitstampMessage
-  Kraken.subscribeReadonly $ defaultHandler orderQueue $ fmap (fmap show) Kraken.parseKrakenMessage
-  Binance.subscribeReadonly $ defaultHandler orderQueue $ fmap (fmap show) Binance.parseBinanceMessage
+  Bitstamp.subscribeHandler $ decodeAndEnQueueHandler Bitstamp.parseToOrder orderQueue
+  Kraken.subscribeHandler $ decodeAndEnQueueHandler Kraken.parseToOrder orderQueue
+  Binance.subscribeHandler $ decodeAndEnQueueHandler Binance.parseToOrder orderQueue
   worker orderQueue
 
 worker :: (Show a) => Chan a -> IO ()
