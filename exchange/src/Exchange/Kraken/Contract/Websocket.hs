@@ -16,6 +16,7 @@ import qualified Data.Vector             as V
 
 import           Data.Aeson.Types
 import           Exchange.Types
+import           Exchange.Utils
 import           Finance.Types
 
 data KrakenMessage
@@ -54,18 +55,6 @@ data SubscriptionPayload =
     }
   deriving (Show)
 
-textToStrict :: (T.Text -> B.ByteString)
-textToStrict = TE.encodeUtf8
-
-textArrayToStrict :: ([[TL.Text]] -> [[B.ByteString]])
-textArrayToStrict = map (map (BL.toStrict . TLE.encodeUtf8))
-
-byteStringToDouble :: B.ByteString -> Double
-byteStringToDouble bs = read (BC.unpack bs) :: Double
-
-byteStringToInteger :: B.ByteString -> Integer
-byteStringToInteger bs = read (BC.unpack bs) :: Integer
-
 mapByteStringToDouble :: [[B.ByteString]] -> [[Double]]
 mapByteStringToDouble bs = map (map byteStringToDouble) bs
 
@@ -97,8 +86,8 @@ instance FromJSON OrderBookUpdatePayload where
     bids <- getBidAsk dataObject
     return $
       OrderBookUpdatePayload
-        (textToStrict channel)
-        (textToStrict symbol)
+        (textStrictToStrict channel)
+        (textStrictToStrict symbol)
         asks
         bids
         (round (byteStringToDouble (getTimestampFromOrder asks bids) * 1000 * 1000))

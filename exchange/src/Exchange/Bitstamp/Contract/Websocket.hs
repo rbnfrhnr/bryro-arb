@@ -13,19 +13,8 @@ import qualified Data.Text.Lazy.Encoding as TLE
 import           Data.Aeson
 import           Data.ByteString
 import           Exchange.Types
+import           Exchange.Utils
 import           Finance.Types
-
-textToStrict :: (TL.Text -> ByteString)
-textToStrict = BL.toStrict . TLE.encodeUtf8
-
-textArrayToStrict :: ([[TL.Text]] -> [[ByteString]])
-textArrayToStrict = Prelude.map (Prelude.map (BL.toStrict . TLE.encodeUtf8))
-
-byteStringToDouble :: ByteString -> Double
-byteStringToDouble bs = read (BC.unpack bs) :: Double
-
-byteStringToInteger :: ByteString -> Int
-byteStringToInteger bs = read (BC.unpack bs) :: Int
 
 data BitstampMessage
   = OrderBookUpdateMessage OrderBookUpdatePayload

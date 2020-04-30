@@ -3,16 +3,16 @@ module Exchange.Binance.Utils
   , subscribeToDepthBook
   ) where
 
-import qualified Control.Concurrent.Chan  as C
-import qualified Control.Concurrent.MVar  as MVar
-import qualified Data.Aeson               as Aeson
-import qualified Data.ByteString.Lazy     as BL
-import qualified Utils.WebSocket          as Socket
+import qualified Control.Concurrent.Chan             as C
+import qualified Control.Concurrent.MVar             as MVar
+import qualified Data.Aeson                          as Aeson
+import qualified Data.ByteString.Lazy                as BL
+import qualified Utils.WebSocket                     as Socket
 
 import           Control.Concurrent
-import           Exchange.Binance.Decoder
-import           Exchange.Utils
+import           Exchange.Binance.Contract.Websocket
 import           Exchange.Types
+import           Exchange.Utils
 import           Finance.Types
 
 parseBinanceMessage :: (BL.ByteString -> Either String BinanceMessage)
