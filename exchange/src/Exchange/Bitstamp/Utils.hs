@@ -30,8 +30,8 @@ orderChannelsToSubscribe =
   , "{\"event\": \"bts:subscribe\",\"data\": {\"channel\": \"diff_order_book_bchusd\"}}"
   ]
 
-parseBitstampMessage :: (BL.ByteString -> Either String BWS.Message)
-parseBitstampMessage msg = Aeson.eitherDecode msg :: Either String BWS.Message
+parseBitstampMessage :: (BL.ByteString -> Either String BWS.BitstampMessage)
+parseBitstampMessage msg = Aeson.eitherDecode msg :: Either String BWS.BitstampMessage
 
 websocketHost :: String
 websocketHost = "ws.bitstamp.net"

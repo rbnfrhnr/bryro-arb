@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Exchange.Bitstamp.Contract.Websocket
-  ( Message
+  ( BitstampMessage
   ) where
 
 import qualified Data.Aeson.Types        as AI
@@ -30,7 +30,7 @@ byteStringToDouble bs = read (BC.unpack bs) :: Double
 byteStringToInteger :: ByteString -> Int
 byteStringToInteger bs = read (BC.unpack bs) :: Int
 
-data Message
+data BitstampMessage
   = OrderBookUpdateMessage OrderBookUpdatePayload
   | UnsubscribeMessage UnsubscribePayload
   | SubscribeMessage SubscribePayload
@@ -87,7 +87,7 @@ instance FromJSON UnsubscribePayload where
   parseJSON (Object object) =
     UnsubscribePayload <$> fmap textToStrict (object .: "event") <*> fmap textToStrict (object .: "channel")
 
-instance FromJSON Message where
+instance FromJSON BitstampMessage where
   parseJSON (Object object) =
     case HML.lookup "event" object of
       Just (String "bts:subscription_succeeded") -> SubscribeMessage <$> parseJSON (Object object)
@@ -96,7 +96,7 @@ instance FromJSON Message where
       Just (String "data") -> OrderBookUpdateMessage <$> parseJSON (Object object)
       _ -> fail $ "Unknown message format. Message sent from Bitstamp could not be parsed\n" ++ show object
 
-instance ExchangeOrder Message where
+instance ExchangeOrder BitstampMessage where
   toOrder (OrderBookUpdateMessage message) =
     Prelude.map (\[price, qty] -> AskOrder (mapToBaseOrder currencyPair price qty msgTimestamp)) asksArray ++
     Prelude.map (\[price, qty] -> BidOrder (mapToBaseOrder currencyPair price qty msgTimestamp)) bidsArray
