@@ -69,6 +69,14 @@ byteStringToInteger bs = read (BC.unpack bs) :: Integer
 mapByteStringToDouble :: [[B.ByteString]] -> [[Double]]
 mapByteStringToDouble bs = map (map byteStringToDouble) bs
 
+-- reduces the two different ways of how kraken sends order updates
+generalizeArray :: Value -> Value
+generalizeArray (Array array) =
+  case V.toList array of
+    [Object subId, Object asks, Object bids, Object channel, Object symbol] ->
+      Array (V.fromList [Object subId, Object (HML.union asks bids), Object channel, Object symbol])
+    _ -> Array array
+
 instance FromJSON SubscriptionPayload where
   parseJSON (Object object) =
     SubscriptionPayload <$> object .: "channelID" <*> fmap textToStrict (object .: "channelName") <*>
@@ -84,7 +92,7 @@ instance FromJSON ConnectionPayload where
 
 instance FromJSON OrderBookUpdatePayload where
   parseJSON (Array array) = do
-    [subId, dataObject, String channel, String symbol] <- parseJSON (Array array)
+    [subId, dataObject, String channel, String symbol] <- parseJSON (generalizeArray (Array array)) -- todo rbnfrhnr fix pattern match failure
     asks <- getBidAsk dataObject
     bids <- getBidAsk dataObject
     return $
