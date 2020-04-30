@@ -4,7 +4,6 @@ module Exchange.Bitstamp.Contract.Websocket
   ( BitstampMessage
   ) where
 
-import qualified Data.Aeson.Types        as AI
 import qualified Data.ByteString.Char8   as BC
 import qualified Data.ByteString.Lazy    as BL
 import qualified Data.HashMap.Lazy       as HML
@@ -13,10 +12,8 @@ import qualified Data.Text.Lazy.Encoding as TLE
 
 import           Data.Aeson
 import           Data.ByteString
-import           Data.ByteString
 import           Exchange.Types
 import           Finance.Types
-import           GHC.Generics
 
 textToStrict :: (TL.Text -> ByteString)
 textToStrict = BL.toStrict . TLE.encodeUtf8
