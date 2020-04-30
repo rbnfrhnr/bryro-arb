@@ -2,7 +2,6 @@
 
 module Exchange.Bitstamp.Utils
   ( parseBitstampMessage
-  , subscribeToFees
   , subscribeToDepthBook
   ) where
 
@@ -11,12 +10,10 @@ import qualified Control.Concurrent.MVar              as MVar
 import qualified Data.Aeson                           as Aeson
 import qualified Data.ByteString.Internal             as B
 import qualified Data.ByteString.Lazy                 as BL
-import qualified Exchange.Bitstamp.Secured            as BitstampSecure
 import qualified Utils.WebSocket                      as Socket
 
 import           Control.Concurrent
 import           Exchange.Bitstamp.Contract.Websocket as BWS
-import           Exchange.Bitstamp.Types
 import           Exchange.Network.Utils
 import           Exchange.Types
 import           Finance.Types
@@ -38,17 +35,6 @@ websocketHost = "ws.bitstamp.net"
 
 subscribeToDepthBook :: (BL.ByteString -> IO ()) -> IO ()
 subscribeToDepthBook partialHandler = Socket.runSecureClient websocketHost "/" 443 partialHandler subscribe
-
-{- | Small worker which fetches the current applicable fees in a given interval -}
-subscribeToFees :: MVar.MVar BitstampFeeTable -> IO ()
-subscribeToFees feeTableHolder = forkIO (fetchFees feeTableHolder) >> return ()
-
-fetchFees :: MVar.MVar BitstampFeeTable -> IO ()
-fetchFees feeTableHolder = do
-  maybeFeeTable <- BitstampSecure.getBitstampFee
-  case maybeFeeTable of
-    Just feeTable -> MVar.putMVar feeTableHolder feeTable
-  threadDelay $ 60 * 1000 * 1000
 
 subscribe :: Connection -> IO ()
 subscribe connection = foldl (\_ cts -> sendTextData connection (B.packChars cts)) (pure ()) orderChannelsToSubscribe

@@ -4,19 +4,12 @@ import qualified Control.Concurrent.MVar as MVar
 
 import           Control.Concurrent
 import           Control.Concurrent.Chan as Chan
-import           Exchange.Binance.Types
 import           Exchange.Binance.Utils  as Binance
-import           Exchange.Bitstamp.Types
 import           Exchange.Bitstamp.Utils as Bitstamp
 import           Exchange.Kraken.Utils   as Kraken
 import           Exchange.Network.Utils
 import           Finance.Types
 import           System.IO
-
-data FeeTable
-  = BitstampFeeTable
-  | BinanceFeeTable
-  deriving (Show)
 
 main :: IO ()
 main = do
