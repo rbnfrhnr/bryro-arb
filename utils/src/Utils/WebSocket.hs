@@ -34,7 +34,7 @@ runSecureClient host path port onMessage onOpen = do
   connection <- C.connectTo context (connectionParams host port)
   stream <- Stream.makeStream (reader connection) (writer connection)
   newCon <- WS.newClientConnection stream host path connectionOptions []
-  onOpen newCon
+  _ <- onOpen newCon
   forkIO $ worker newCon onMessage
   return ()
 

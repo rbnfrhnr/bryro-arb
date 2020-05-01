@@ -15,6 +15,7 @@ import qualified Data.ByteString.Lazy                 as BL
 import qualified Utils.WebSocket                      as Socket
 
 import           Control.Concurrent
+import           Control.Monad                        (foldM)
 import           Exchange.Bitstamp.Contract.Websocket as BWS
 import           Exchange.Types
 import           Exchange.Utils
@@ -45,4 +46,4 @@ subscribeHandler :: Socket.WebsocketHandler -> IO ()
 subscribeHandler handler = Socket.runSecureClient websocketHost "/" 443 handler subscribe
 
 subscribe :: Connection -> IO ()
-subscribe connection = foldl (\_ cts -> sendTextData connection (B.packChars cts)) (pure ()) orderChannelsToSubscribe
+subscribe connection = foldM (\_ cts -> sendTextData connection (B.packChars cts)) () orderChannelsToSubscribe
