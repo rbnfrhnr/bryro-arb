@@ -12,12 +12,25 @@ import           Finance.OrderBook.Types
 import           Finance.Types
 import           Finance.Utils
 
+{- $setup
+ >>> import           Test.QuickCheck
+ >>> import           Test.QuickCheck.Gen (choose)
+ >>> instance Arbitrary BaseOrder where arbitrary = BaseOrder <$> return Bitstamp <*> return LTCUSD <*> choose (9, 10) <*> choose (0, 10) <*> return 0
+ -}
 {- | This function updates a given DepthBook by the order provided
      If the order is already in the book. the order gets replaced/updated
      If the order is not yet in the book, it will be added.
      If the order is in the book but the quantity of the order is zero, we delete it.
 
      The function works for Bid Orders as well as for Ask Orders
+
+     >>> putStrLn "hey"
+     hey
+
+     >>> 1 + 3
+     4
+
+     prop> \(BaseOrder exc cur price qty ts) -> exc == Bitstamp && cur == LTCUSD && (price >= 9 && price <= 10) && (qty >= 0 && qty <= 10)
 -}
 updateDepthBook :: DepthBook -> Order -> DepthBook
 updateDepthBook book@(DepthBook currencyPair askbook bidbook) order@(AskOrder baseOrder)

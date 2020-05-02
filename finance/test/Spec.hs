@@ -1,9 +1,10 @@
 import           Finance.Types
+import           Test.DocTest
 import           Test.QuickCheck
 import           Test.QuickCheck.Gen (choose)
 
 main :: IO ()
-main = verboseCheck checkMyTest
+main = quickCheck checkMyTest >> doctest ["-isrc", "src/Finance/OrderBook/Utils.hs"]
 
 checkMyTest :: BaseOrder -> Bool
 checkMyTest (BaseOrder exc cur price qty ts) =

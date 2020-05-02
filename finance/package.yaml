@@ -23,6 +23,7 @@ dependencies:
   - aeson  >=1.4.4.0
   - base >= 4.7 && < 5
   - containers >=0.6.0.1
+  - doctest >=0.16.3
   - QuickCheck >=2.14
 library:
   source-dirs: src
