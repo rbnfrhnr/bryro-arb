@@ -36,7 +36,7 @@ orderToSpreadMessage :: Order -> SpreadBook -> Maybe DepthBook -> [Maybe SpreadM
 orderToSpreadMessage (BidOrder order) spreadBook maybeDepthBook =
   [bidOrderToSpreadMessage (BidOrder order) spreadBook maybeDepthBook]
 orderToSpreadMessage (AskOrder order) spreadBook (Just depthBook) =
-  Prelude.foldl
+  foldl
     (\spreadMessages bidOrder -> spreadMessages ++ [bidOrderToSpreadMessage bidOrder spreadBook (Just depthBook)])
     []
     higherBids
