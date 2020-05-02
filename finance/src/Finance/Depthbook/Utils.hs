@@ -7,6 +7,7 @@ module Finance.Depthbook.Utils
   ) where
 
 import qualified Data.Map                as Map
+
 import           Finance.Depthbook.Types
 import           Finance.Types
 
@@ -54,13 +55,12 @@ updateCollection collection (order:xs)
 {- | This function returns all the Ask prices which are lower than the provided Bid price for a given DepthBook -}
 getLowerAsks :: Order -> DepthBook -> [Order]
 getLowerAsks order@(AskOrder _) _ = []
-getLowerAsks order@(BidOrder _) (DepthBook _ askBook _) = Prelude.map (fst) (Map.toList (fst (Map.split order askBook)))
+getLowerAsks order@(BidOrder _) (DepthBook _ askBook _) = Prelude.map fst (Map.toList (fst (Map.split order askBook)))
 
 {- | This function returns all the Bid prices which are higher than the provided asking price for a given DepthBook -}
 getHigherBids :: Order -> DepthBook -> [Order]
 getHigherBids order@(BidOrder _) _ = []
-getHigherBids order@(AskOrder _) (DepthBook _ _ bidBook) =
-  Prelude.map (fst) (Map.toList (snd (Map.split order bidBook)))
+getHigherBids order@(AskOrder _) (DepthBook _ _ bidBook) = Prelude.map fst (Map.toList (snd (Map.split order bidBook)))
 
 {- | Constructor function for a Depthbook -}
 openDepthBook :: CurrencyPair -> DepthBook

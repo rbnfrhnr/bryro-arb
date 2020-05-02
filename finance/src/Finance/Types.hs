@@ -5,7 +5,6 @@ module Finance.Types
   ( BaseOrder(..)
   , CurrencyPair(..)
   , Exchange(..)
-  , Fee(..)
   , Order(..)
   , Tick(..)
   , UpdateTick
@@ -23,12 +22,6 @@ import           GHC.Generics
 {- | Basic typeclass to convert certain values to a csv representation -}
 class Csv a where
   toCsv :: a -> String
-
-{- | class to map an order to a fee-applied-order, given the fee representation
-     This way we can map the orders based on the many different ways of how fees get applied to orders
--}
-class Fee a where
-  applyFee :: Order -> a -> Maybe Order
 
 {- | Base representation of an order offered through an exchange. -}
 data BaseOrder =
@@ -109,8 +102,6 @@ instance Csv Order where
     "Ask," ++ show exchange ++ "," ++ show symbol ++ "," ++ show price ++ "," ++ show qty ++ "," ++ show timestamp
   toCsv (BidOrder (BaseOrder exchange symbol price qty timestamp)) =
     "Bid," ++ show exchange ++ "," ++ show symbol ++ "," ++ show price ++ "," ++ show qty ++ "," ++ show timestamp
-
-type PriceConstructor = Exchange -> CurrencyPair -> Double -> Double -> Int -> Order
 
 getCurrencyPair :: Order -> CurrencyPair
 getCurrencyPair (AskOrder (BaseOrder _ pair _ _ _)) = pair
