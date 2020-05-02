@@ -1,4 +1,4 @@
-module Finance.Depthbook.Types
+module Finance.OrderBook.Types
   ( DepthBook(..)
   , DepthBookCollection(..)
   ) where

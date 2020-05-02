@@ -5,8 +5,8 @@ module Finance.Arbitrage.Utils
 import qualified Data.Map                as Map
 
 import           Finance.Arbitrage.Types
-import           Finance.Depthbook.Types
-import           Finance.Depthbook.Utils as DepthBook
+import           Finance.OrderBook.Types
+import           Finance.OrderBook.Utils as DepthBook
 import           Finance.Types
 
 getSpreadKey :: Spread -> SpreadKey

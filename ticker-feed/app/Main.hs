@@ -1,5 +1,5 @@
-{-# LANGUAGE FlexibleInstances         #-}
-{-# LANGUAGE OverloadedStrings         #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Main where
 
@@ -18,9 +18,10 @@ import           Exchange.Binance.Utils  as Binance
 import           Exchange.Bitstamp.Utils as Bitstamp
 import           Exchange.Handler
 import           Exchange.Kraken.Utils   as Kraken
-import           Finance.Depthbook.Types
-import           Finance.Depthbook.Utils
+import           Finance.OrderBook.Types
+import           Finance.OrderBook.Utils
 import           Finance.Types
+import           Finance.Utils
 import           Network.Kafka
 import           Network.Kafka.Producer
 import           System.FilePath

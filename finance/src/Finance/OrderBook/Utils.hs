@@ -1,4 +1,4 @@
-module Finance.Depthbook.Utils
+module Finance.OrderBook.Utils
   ( getHigherBids
   , getLowerAsks
   , updateDepthBook
@@ -8,8 +8,9 @@ module Finance.Depthbook.Utils
 
 import qualified Data.Map                as Map
 
-import           Finance.Depthbook.Types
+import           Finance.OrderBook.Types
 import           Finance.Types
+import           Finance.Utils
 
 {- | This function updates a given DepthBook by the order provided
      If the order is already in the book. the order gets replaced/updated

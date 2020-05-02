@@ -25,8 +25,9 @@ import           Data.Aeson
 import           Data.Time               (UTCTime)
 import           Data.Time.Clock.POSIX   (posixSecondsToUTCTime)
 import           Database.InfluxDB.Line
-import           Finance.Depthbook.Types
+import           Finance.OrderBook.Types
 import           Finance.Types
+import           Finance.Utils
 import           Network.Kafka
 import           Network.Kafka.Producer
 import           System.IO
