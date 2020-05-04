@@ -65,24 +65,24 @@ handleDepthBook :: TickerST -> Order -> TickerST
 handleDepthBook tickerST@(TickerST dBookMap _ _ _) order =
   case Map.lookup dBookMapKey dBookMap of
     Just depthBook -> tickerST {tickerDBookMap = Map.insert dBookMapKey (updateDepthBook depthBook order) dBookMap}
-    Nothing ->
-      handleDepthBook
-        tickerST {tickerDBookMap = Map.insert dBookMapKey (openOrderBook (getCurrencyPair order)) dBookMap}
-        order
+    Nothing -> handleDepthBook tickerST {tickerDBookMap = Map.insert dBookMapKey newOrderBook dBookMap} order
   where
     dBookMapKey = toCurrencyExchangeKey order
+    newOrderBook = openOrderBook (getCurrencyPair order)
 
 bufferedWrite :: TickerST -> CurrencyExchangeKey -> Maybe Tick -> Maybe OrderBook -> IO TickerST
 bufferedWrite tickerST@(TickerST dbookMap tickBuffer dest queue) key (Just currentTick) (Just book)
   | currentTick /= latestTick =
-    writeOutIO dest latestTick >>= (\uDest -> return (TickerST dbookMap (Map.insert key latestTick tickBuffer) uDest queue))
+    writeOutIO dest latestTick >>= (\uDest -> return (TickerST dbookMap updatedTickBuffer uDest queue))
   | otherwise = return tickerST
   where
     latestTick = getTick book
+    updatedTickBuffer = Map.insert key latestTick tickBuffer
 bufferedWrite tickerST@(TickerST dbookMap tickBuffer dest queue) key Nothing (Just book) =
-  writeOutIO dest tickPair >>= (\uDest -> return (TickerST dbookMap (Map.insert key tickPair tickBuffer) uDest queue))
+  writeOutIO dest tickPair >>= (\uDest -> return (TickerST dbookMap updatedTickBuffer uDest queue))
   where
     tickPair = getTick book
+    updatedTickBuffer = Map.insert key tickPair tickBuffer
 bufferedWrite tickerST key lastTick book = return tickerST
 
 decodeOrders :: Either KafkaClientError [BS.ByteString] -> IO [Order]
