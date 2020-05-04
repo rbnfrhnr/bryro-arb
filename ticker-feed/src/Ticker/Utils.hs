@@ -34,7 +34,7 @@ import           System.IO
 import           Utils.Influx            as Influx
 import           Utils.Kafka             as Kafka
 
-instance KafkaData (Maybe Order, Maybe Order) where
+instance KafkaData Tick where
   toKafkaData tick = makeMessage $ BL.toStrict $ encode tick
 
 instance WriteOutIO Kafka.WriteKafka where
@@ -43,7 +43,7 @@ instance WriteOutIO Kafka.WriteKafka where
 --instance WriteOutIO Influx.InfluxConnection where
 --  writeOutIO influxCon tick = Influx.writeToInflux influxCon tick
 instance WriteOutIO SimpleOut where
-  writeOutIO simple tick = print tick >> hFlush stdout >> return SimpleOut
+  writeOutIO simple tick = printTickFiltered (Just "LTCUSDBitstamp") tick >> hFlush stdout >> return SimpleOut
 
 instance WriteOutIO Destination where
   writeOutIO (Destination desti) tick = Destination <$> writeOutIO desti tick
@@ -56,7 +56,7 @@ type CurrencyExchangeKey = String
 
 type DBookMap = Map.Map CurrencyExchangeKey OrderBook
 
-type TickBuffer = Map.Map CurrencyExchangeKey (Maybe Order, Maybe Order)
+type TickBuffer = Map.Map CurrencyExchangeKey Tick
 
 data SimpleOut =
   SimpleOut
@@ -85,15 +85,15 @@ printLowestAsk bookMap =
        return dbook)
     bookMap
 
-printTickFiltered :: Maybe CurrencyExchangeKey -> (Maybe Order, Maybe Order) -> IO ()
+printTickFiltered :: Maybe CurrencyExchangeKey -> Tick -> IO ()
 printTickFiltered Nothing tick = printTick tick
-printTickFiltered (Just currExchangeKey) (Just ask, Just bid)
-  | currExchangeKey == toCurrencyExchangeKey ask = printTick (Just ask, Just bid)
+printTickFiltered (Just currExchangeKey) (Tick (Just ask) (Just bid) timestamp)
+  | currExchangeKey == toCurrencyExchangeKey ask = printTick (Tick (Just ask) (Just bid) timestamp)
   | otherwise = return ()
 printTickFiltered _ _ = return ()
 
-printTick :: (Maybe Order, Maybe Order) -> IO ()
-printTick (Just ask, Just bid) =
+printTick :: Tick -> IO ()
+printTick (Tick (Just ask) (Just bid) timestamp) =
   putStrLn
     (show (getExchangeFromOrder ask) ++
      " -> " ++
@@ -102,4 +102,4 @@ printTick (Just ask, Just bid) =
 printTick _ = return ()
 
 class WriteOutIO a where
-  writeOutIO :: a -> (Maybe Order, Maybe Order) -> IO a
+  writeOutIO :: a -> Tick -> IO a

@@ -19,3 +19,6 @@ data Tick =
 instance ToJSON Tick
 
 instance FromJSON Tick
+
+instance Eq Tick where
+  (==) (Tick ask1 bid1 _) (Tick ask2 bid2 _) = ask1 == ask2 && bid1 == bid2
