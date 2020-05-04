@@ -3,6 +3,7 @@ module Finance.Utils
   , getExchangeFromOrder
   , getPriceFromOrder
   , getQtyFromOrder
+  , getTimestampFromOrder
   ) where
 
 import           Finance.Types
@@ -22,3 +23,7 @@ getPriceFromOrder (BidOrder order) = orderCurrentPrice order
 getQtyFromOrder :: Order -> OrderQty
 getQtyFromOrder (AskOrder order) = orderQuantity order
 getQtyFromOrder (BidOrder order) = orderQuantity order
+
+getTimestampFromOrder :: Order -> Int
+getTimestampFromOrder (AskOrder order) = orderTimestamp order
+getTimestampFromOrder (BidOrder order) = orderTimestamp order

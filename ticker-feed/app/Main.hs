@@ -67,12 +67,12 @@ handleDepthBook tickerST@(TickerST dBookMap _ _ _) order =
     Just depthBook -> tickerST {tickerDBookMap = Map.insert dBookMapKey (updateDepthBook depthBook order) dBookMap}
     Nothing ->
       handleDepthBook
-        tickerST {tickerDBookMap = Map.insert dBookMapKey (openDepthBook (getCurrencyPair order)) dBookMap}
+        tickerST {tickerDBookMap = Map.insert dBookMapKey (openOrderBook (getCurrencyPair order)) dBookMap}
         order
   where
     dBookMapKey = toCurrencyExchangeKey order
 
-bufferedWrite :: TickerST -> CurrencyExchangeKey -> Maybe (Maybe Order, Maybe Order) -> Maybe DepthBook -> IO TickerST
+bufferedWrite :: TickerST -> CurrencyExchangeKey -> Maybe (Maybe Order, Maybe Order) -> Maybe OrderBook -> IO TickerST
 bufferedWrite tickerST@(TickerST dbookMap tickBuffer dest queue) key (Just (lastAsk, lastBid)) (Just book)
   | (lastAsk, lastBid) /= tickPair =
     writeOutIO dest tickPair >>= (\uDest -> return (TickerST dbookMap (Map.insert key tickPair tickBuffer) uDest queue))

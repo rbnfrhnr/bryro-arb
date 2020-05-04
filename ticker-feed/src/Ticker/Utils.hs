@@ -38,7 +38,7 @@ instance KafkaData (Maybe Order, Maybe Order) where
   toKafkaData tick = makeMessage $ BL.toStrict $ encode tick
 
 instance WriteOutIO Kafka.WriteKafka where
-  writeOutIO wKafka tick = Kafka.writeToKafka (\msg -> return ()) wKafka tick >> return wKafka :: IO (Kafka.WriteKafka)
+  writeOutIO wKafka tick = Kafka.writeToKafka (\msg -> return ()) wKafka tick >> return wKafka :: IO Kafka.WriteKafka
 
 --instance WriteOutIO Influx.InfluxConnection where
 --  writeOutIO influxCon tick = Influx.writeToInflux influxCon tick
@@ -54,7 +54,7 @@ instance WriteOutIO [Destination] where
 
 type CurrencyExchangeKey = String
 
-type DBookMap = Map.Map CurrencyExchangeKey DepthBook
+type DBookMap = Map.Map CurrencyExchangeKey OrderBook
 
 type TickBuffer = Map.Map CurrencyExchangeKey (Maybe Order, Maybe Order)
 

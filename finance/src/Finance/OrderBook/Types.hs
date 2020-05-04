@@ -1,6 +1,6 @@
 module Finance.OrderBook.Types
-  ( DepthBook(..)
-  , DepthBookCollection(..)
+  ( OrderBook(..)
+  , OrderBookCollection(..)
   ) where
 
 import           Data.Map
@@ -10,8 +10,8 @@ import           Finance.Types
      It holds prices regardless of their source exchange. It's ordered by Currency Pair.
      A valid CurrencyPair could be LTCUSD
 -}
-data DepthBook =
-  DepthBook
+data OrderBook =
+  OrderBook
     { depthBookCurrencyPair :: !CurrencyPair -- ^ Identifier for this Depthbook. (LTCUSD, XRPUSD etc)
     , depthBookAsk          :: Map Order Order -- ^ Collection of asking prices for this CurrencyPair
     , depthBookBid          :: Map Order Order -- ^ Collection of biding prices fot this CurrencyPair
@@ -19,4 +19,4 @@ data DepthBook =
   deriving (Show)
 
 -- | A collection of various DepthBooks. Identified by their CurrencyPair
-type DepthBookCollection = Map CurrencyPair DepthBook
+type OrderBookCollection = Map CurrencyPair OrderBook
