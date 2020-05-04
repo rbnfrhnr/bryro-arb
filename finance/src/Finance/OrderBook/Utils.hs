@@ -38,15 +38,15 @@ updateDepthBook book@(OrderBook currencyPair askbook bidbook) order@(AskOrder ba
   | qty > 0.0 = OrderBook currencyPair orderInsertedAskBook bidbook
   | otherwise = OrderBook currencyPair orderDeletedAskBook bidbook
   where
-    orderDeletedAskBook = Map.delete order askbook
-    orderInsertedAskBook = Map.insert order order askbook
+    orderDeletedAskBook = Map.delete (toOrderKey order) askbook
+    orderInsertedAskBook = Map.insert (toOrderKey order) order askbook
     qty = orderQuantity baseOrder
 updateDepthBook book@(OrderBook currencyPair askbook bidbook) order@(BidOrder baseOrder)
   | qty > 0.0 = OrderBook currencyPair askbook orderInsertedBidBook
   | otherwise = OrderBook currencyPair askbook orderDeletedBidBook
   where
-    orderInsertedBidBook = Map.insert order order bidbook
-    orderDeletedBidBook = Map.delete order bidbook
+    orderInsertedBidBook = Map.insert (toOrderKey order) order bidbook
+    orderDeletedBidBook = Map.delete (toOrderKey order) bidbook
     qty = orderQuantity baseOrder
 
 updateDepthBookOrders :: OrderBook -> [Order] -> OrderBook
@@ -66,15 +66,18 @@ updateCollection collection (order:xs)
     maybeBook = Map.lookup currencyPair collection
     currencyPair = getCurrencyPair order
 
+toOrderKey :: Order -> OrderKey
+toOrderKey order = OrderKey (getPriceFromOrder order)
+
 {- | This function returns all the Ask prices which are lower than the provided Bid price for a given DepthBook -}
 getLowerAsks :: Order -> OrderBook -> [Order]
 getLowerAsks order@(AskOrder _) _ = []
-getLowerAsks order@(BidOrder _) (OrderBook _ askBook _) = (Map.elems . fst) (Map.split order askBook)
+getLowerAsks order@(BidOrder _) (OrderBook _ askBook _) = (Map.elems . fst) (Map.split (toOrderKey order) askBook)
 
 {- | This function returns all the Bid prices which are higher than the provided asking price for a given DepthBook -}
 getHigherBids :: Order -> OrderBook -> [Order]
 getHigherBids order@(BidOrder _) _ = []
-getHigherBids order@(AskOrder _) (OrderBook _ _ bidBook) = (Map.elems . snd) (Map.split order bidBook)
+getHigherBids order@(AskOrder _) (OrderBook _ _ bidBook) = (Map.elems . snd) (Map.split (toOrderKey order) bidBook)
 
 {- | Constructor function for a Depthbook -}
 openOrderBook :: CurrencyPair -> OrderBook
