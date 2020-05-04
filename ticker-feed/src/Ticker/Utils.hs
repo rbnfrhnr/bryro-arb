@@ -11,7 +11,6 @@ module Ticker.Utils
   , WriteOutIO
   , SimpleOut(..)
   , printTickFiltered
-  , printLowestAsk
   , toCurrencyExchangeKey
   , writeOutIO
   ) where
@@ -50,7 +49,7 @@ instance WriteOutIO Destination where
 
 instance WriteOutIO [Destination] where
   writeOutIO destinations tick =
-    foldM (\list (Destination dest) -> liftM (: list) (Destination <$> writeOutIO dest tick)) [] destinations
+    foldM (\list (Destination dest) -> fmap (: list) (Destination <$> writeOutIO dest tick)) [] destinations
 
 type CurrencyExchangeKey = String
 
@@ -76,29 +75,16 @@ data TickerST =
 toCurrencyExchangeKey :: Order -> String
 toCurrencyExchangeKey order = show (getCurrencyPair order) ++ show (getExchangeFromOrder order)
 
-printLowestAsk :: DBookMap -> IO DBookMap
-printLowestAsk bookMap =
-  Map.traverseWithKey
-    (\key dbook ->
-       print (fmap ((++) (key ++ "  ") . show . getPriceFromOrder . snd) (Map.lookupMin (depthBookAsk dbook))) >>
-       hFlush stdout >>
-       return dbook)
-    bookMap
-
 printTickFiltered :: Maybe CurrencyExchangeKey -> Tick -> IO ()
 printTickFiltered Nothing tick = printTick tick
-printTickFiltered (Just currExchangeKey) (Tick (Just ask) (Just bid) timestamp)
-  | currExchangeKey == toCurrencyExchangeKey ask = printTick (Tick (Just ask) (Just bid) timestamp)
+printTickFiltered (Just currExchangeKey) tick@(Tick (Just ask) (Just bid) (Just currency) (Just exchange) timestamp)
+  | currExchangeKey == show currency ++ show exchange = printTick tick
   | otherwise = return ()
 printTickFiltered _ _ = return ()
 
 printTick :: Tick -> IO ()
-printTick (Tick (Just ask) (Just bid) timestamp) =
-  putStrLn
-    (show (getExchangeFromOrder ask) ++
-     " -> " ++
-     show (getCurrencyPair ask) ++ " - " ++ show (getPriceFromOrder ask) ++ " / " ++ show (getPriceFromOrder bid)) >>
-  hFlush stdout
+printTick (Tick (Just ask) (Just bid) (Just currency) (Just exchange) timestamp) =
+  putStrLn (show exchange ++ " -> " ++ show currency ++ " - " ++ show ask ++ " / " ++ show bid) >> hFlush stdout
 printTick _ = return ()
 
 class WriteOutIO a where

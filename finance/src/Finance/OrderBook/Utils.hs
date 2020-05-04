@@ -99,11 +99,27 @@ getDepthBookFromCollection collection bookCurrencyPair = Map.lookup bookCurrency
 {- | extracts a tick (lowest ask and highest bid) from a given order book.
  -}
 getTick :: OrderBook -> Tick
-getTick (OrderBook _ asks bids) = Tick minAsk maxBid timestamp
+getTick (OrderBook _ asks bids) = Tick askPair bidPair currencyPair exchange timestamp
   where
     minAsk = fmap snd (Map.lookupMin asks)
+    askPair = fmap (\order -> (getPriceFromOrder order, getQtyFromOrder order)) minAsk
     maxBid = fmap snd (Map.lookupMax bids)
+    bidPair = fmap (\order -> (getPriceFromOrder order, getQtyFromOrder order)) maxBid
     timestamp = getLatestTimestamp minAsk maxBid
+    currencyPair = getCurrencyPairForTick minAsk maxBid
+    exchange = getExchangeForTick minAsk maxBid
+
+getCurrencyPairForTick :: Maybe Order -> Maybe Order -> Maybe CurrencyPair
+getCurrencyPairForTick Nothing Nothing = Nothing
+getCurrencyPairForTick (Just order) Nothing = Just $ getCurrencyPair order
+getCurrencyPairForTick Nothing (Just order) = Just $ getCurrencyPair order
+getCurrencyPairForTick (Just order1) (Just order2) = Just $ getCurrencyPair order1
+
+getExchangeForTick :: Maybe Order -> Maybe Order -> Maybe Exchange
+getExchangeForTick Nothing Nothing = Nothing
+getExchangeForTick (Just order) Nothing = Just $ getExchangeFromOrder order
+getExchangeForTick Nothing (Just order) = Just $ getExchangeFromOrder order
+getExchangeForTick (Just order1) (Just order2) = Just $ getExchangeFromOrder order1
 
 getLatestTimestamp :: Maybe Order -> Maybe Order -> Int
 getLatestTimestamp Nothing Nothing = 0
