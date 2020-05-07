@@ -58,7 +58,7 @@ getConnectionConf cfg =
   return $
   InfluxConnection
     []
-    (Influx.writeParams db & Influx.authentication ?~ cred & Influx.server . Influx.host .~ (influxHost cfg) &
+    (Influx.writeParams db & Influx.authentication ?~ cred & Influx.server . Influx.host .~ influxHost cfg &
      Influx.precision .~
      Influx.Nanosecond)
     cfg

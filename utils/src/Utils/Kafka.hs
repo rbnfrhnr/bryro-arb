@@ -16,13 +16,13 @@ module Utils.Kafka
   , writeKafkaState
   ) where
 
-import           Control.Monad
-import           Data.ByteString
 import qualified Data.Configurator       as Conf
+
+import           Data.ByteString
 import           Data.Configurator.Types
 import           Network.Kafka
-import           Network.Kafka.Consumer
-import           Network.Kafka.Producer
+import           Network.Kafka.Consumer  (fetch', fetchMessages, fetchRequest)
+import           Network.Kafka.Producer  (produceMessages)
 import           Network.Kafka.Protocol
 
 data KafkaConfig =
@@ -99,7 +99,7 @@ writeToKafka respHandler (WriteKafka kafkaState topicName batch batchSize) rawDa
 {- | uses ReadKafka to read from a certain topic and returns the payload as bytesString if successful-}
 readFromKafka :: ReadKafka -> IO (Either KafkaClientError [ByteString])
 readFromKafka (ReadKafka state offsets parti topicName) =
-  liftM
+  fmap
     (fmap (Prelude.map tamPayload . fetchMessages))
     (runKafka
        state
