@@ -17,7 +17,9 @@ import qualified Data.Vector             as V
 import           Data.Aeson.Types
 import           Exchange.Types
 import           Exchange.Utils
-import           Finance.Types
+import           Finance.Currency
+import           Finance.Exchange
+import           Finance.Order
 
 data KrakenMessage
   = OrderBookUpdateMessage OrderBookUpdatePayload

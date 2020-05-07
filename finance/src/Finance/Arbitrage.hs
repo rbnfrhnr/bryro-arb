@@ -1,15 +1,18 @@
 {-# LANGUAGE DataKinds #-}
-module Finance.Arbitrage.Utils
-  (
+
+module Finance.Arbitrage
+  ( Spread(..)
+  , SpreadBook
+  , SpreadKey
+  , SpreadMessage(..)
   ) where
 
-import qualified Data.Map                as Map
+import qualified Data.Map                   as Map
 
-import           Control.Monad           (foldM)
-import           Finance.Arbitrage.Types
-import           Finance.OrderBook.Types
-import           Finance.OrderBook.Utils as OrderBook
-import           Finance.Types
+import           Control.Monad              (foldM)
+import           Finance.Arbitrage.Internal
+import           Finance.Order
+import           Finance.OrderBook
 
 toSpreadKey :: Spread -> SpreadKey
 toSpreadKey (Spread bidOrder _) = show exchange ++ show symbol ++ show price
@@ -28,14 +31,14 @@ toSpreadKey (Spread bidOrder _) = show exchange ++ show symbol ++ show price
     - SpreadClosing -> SpreadKey is in the map but there are no asking orders lower than the bid order
      -}
 bidOrderToSpreadMessage :: Order BidOrder -> SpreadBook -> OrderBook -> Maybe SpreadMessage
-bidOrderToSpreadMessage bidOrder spreadBook depthBook
+bidOrderToSpreadMessage bidOrder spreadBook orderBook
   | not spreadIsInMap && not (null lowerAskOrders) = Just $ SpreadOpening spread
   | spreadIsInMap && not (null lowerAskOrders) = Just $ SpreadUpdate spread
   | spreadIsInMap && null lowerAskOrders = Just $ SpreadClosing spread
   | otherwise = Nothing
   where
-    askBook = depthBookAsk depthBook
-    lowerAskOrders = OrderBook.getLowerAsks bidOrder depthBook
+    askBook = orderBookAsk orderBook
+    lowerAskOrders = getLowerAsks bidOrder orderBook
     spread = Spread bidOrder lowerAskOrders
     spreadKey = toSpreadKey spread
     spreadIsInMap = Map.member spreadKey spreadBook

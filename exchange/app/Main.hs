@@ -9,7 +9,6 @@ import           Exchange.Bitstamp.Utils as Bitstamp
 import           Exchange.Handler
 import           Exchange.Kraken.Utils   as Kraken
 import           Exchange.Utils
-import           Finance.Types
 import           System.IO
 
 main :: IO ()

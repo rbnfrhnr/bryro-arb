@@ -1,6 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 
-module Finance.Arbitrage.Types
+module Finance.Arbitrage.Internal
   ( Spread(..)
   , SpreadBook
   , SpreadKey
@@ -8,7 +8,7 @@ module Finance.Arbitrage.Types
   ) where
 
 import           Data.Map
-import           Finance.Types
+import           Finance.Order
 
 data Spread =
   Spread

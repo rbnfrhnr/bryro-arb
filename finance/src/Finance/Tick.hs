@@ -12,10 +12,10 @@ import           GHC.Generics     (Generic)
 
 data Tick =
   Tick
-    { tickAsk       :: !(Maybe (Double, Double))
-    , tickBid       :: !(Maybe (Double, Double))
-    , tickCurrency  :: !(Maybe CurrencyPair)
-    , tickExchange  :: !(Maybe Exchange)
+    { tickAsk       :: !(Double, Double)
+    , tickBid       :: !(Double, Double)
+    , tickCurrency  :: !CurrencyPair
+    , tickExchange  :: !Exchange
     , tickTimestamp :: !Int
     }
   deriving (Show, Generic)

@@ -17,7 +17,6 @@ import qualified Data.Text.Lazy.Encoding as TLE
 
 import           Data.ByteString
 import           Exchange.Types
-import           Finance.Types
 import           System.IO
 
 printParseError :: String -> BL.ByteString -> IO ()

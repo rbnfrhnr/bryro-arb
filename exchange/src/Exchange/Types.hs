@@ -2,7 +2,7 @@ module Exchange.Types
   ( ExchangeOrder(..)
   ) where
 
-import           Finance.Types
+import           Finance.Order
 
 class ExchangeOrder a where
   toOrder :: a -> [BaseOrder]

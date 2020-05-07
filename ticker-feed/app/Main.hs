@@ -18,10 +18,9 @@ import           Exchange.Binance.Utils  as Binance
 import           Exchange.Bitstamp.Utils as Bitstamp
 import           Exchange.Handler
 import           Exchange.Kraken.Utils   as Kraken
-import           Finance.OrderBook.Types
-import           Finance.OrderBook.Utils
-import           Finance.Types
-import           Finance.Utils
+import           Finance.Order
+import           Finance.OrderBook
+import           Finance.Tick
 import           Network.Kafka
 import           Network.Kafka.Producer
 import           System.FilePath
@@ -41,15 +40,16 @@ withConfig (Right cfg) = do
   kafkaState <- fmap Kafka.configToKafkaState (Kafka.createKafkaConfig cfg)
   orderQueue <- Chan.newChan
   Bitstamp.subscribeHandler $ decodeAndEnQueueHandler Bitstamp.parseToOrder orderQueue
-  Kraken.subscribeHandler $ decodeAndEnQueueHandler Kraken.parseToOrder orderQueue
-  Binance.subscribeHandler $ decodeAndEnQueueHandler Binance.parseToOrder orderQueue
+  influxConn <- Influx.getConnection cfg :: IO Influx.InfluxConnection
   runTransform
     (TickerST
        Map.empty
        Map.empty
-       [Destination SimpleOut, Destination (writeKafkaState kafkaState "bryro-ticker" 0)]
+       [Destination SimpleOut, Destination (writeKafkaState kafkaState "bryro-ticker" 0), Destination influxConn]
        orderQueue)
 
+--  Kraken.subscribeHandler $ decodeAndEnQueueHandler Kraken.parseToOrder orderQueue
+--  Binance.subscribeHandler $ decodeAndEnQueueHandler Binance.parseToOrder orderQueue
 runTransform :: TickerST -> IO ()
 runTransform tickerST@(TickerST dBookMap tBuffer _ queue) =
   Chan.readChan queue >>= return . foldl handleDepthBook tickerST >>=
@@ -68,7 +68,7 @@ handleDepthBook tickerST@(TickerST dBookMap _ _ _) order =
     Nothing -> handleDepthBook tickerST {tickerDBookMap = Map.insert dBookMapKey newOrderBook dBookMap} order
   where
     dBookMapKey = toCurrencyExchangeKey order
-    newOrderBook = openOrderBook (orderCurrencyPair order)
+    newOrderBook = openOrderBook (orderExchange order) (orderCurrencyPair order)
 
 bufferedWrite :: TickerST -> CurrencyExchangeKey -> Maybe Tick -> Maybe OrderBook -> IO TickerST
 bufferedWrite tickerST@(TickerST dbookMap tickBuffer dest queue) key (Just currentTick) (Just book)
@@ -87,7 +87,7 @@ bufferedWrite tickerST key lastTick book = return tickerST
 
 decodeOrders :: Either KafkaClientError [BS.ByteString] -> IO [BaseOrder]
 decodeOrders (Right msg) = return (foldl filteredDecode [] msg) :: IO [BaseOrder]
-decodeOrders (Left err)  = fail "vla"
+decodeOrders (Left err) = fail "vla"
 
 filteredDecode :: [BaseOrder] -> BS.ByteString -> [BaseOrder]
 filteredDecode orders bsMessage =

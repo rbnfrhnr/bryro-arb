@@ -4,29 +4,30 @@
 
 module Main where
 
+import qualified Data.Aeson               as Aeson
+import qualified Data.ByteString.Lazy     as BL
+import qualified Data.Map                 as Map
+import qualified Database.InfluxDB.Format as F
+
 import           Prelude                  hiding (lookup)
 
 import           Control.Concurrent
 import           Control.Concurrent.Chan  as Chan
 import           Control.Exception
 import           Control.Monad
-import qualified Data.Aeson               as Aeson
 import           Data.ByteString
-import qualified Data.ByteString.Lazy     as BL
 import           Data.Configurator
 import           Data.Configurator.Types
-import qualified Data.Map                 as Map
 import           Data.Text
 import           Data.Time
 import           Data.Time.Clock
 import           Data.Time.Clock.POSIX
 import           Database.InfluxDB
-import qualified Database.InfluxDB.Format as F
 import           Exchange.Binance.Utils   as Binance
 import           Exchange.Bitstamp.Utils  as Bitstamp
 import           Exchange.Handler
 import           Exchange.Kraken.Utils    as Kraken
-import           Finance.Types
+import           Finance.Order
 import           Network.Kafka
 import           Network.Kafka.Producer
 import           Network.Kafka.Protocol
@@ -72,21 +73,18 @@ kafkaRespHandler (Right msgs) = return ()
 kafkaRespHandler (Left err)   = print err
 
 instance InfluxData BaseOrder where
-  toInfluxLine order = constructLine order
-
-constructLine :: BaseOrder -> Line UTCTime
-constructLine (BaseOrder exchange currency price quantity time orderType) =
-  Line "order" tags fields (Just utcTime :: Maybe UTCTime)
-  where
-    tags =
-      Map.fromList
-        [ ("currency", stringFormatter (show currency))
-        , ("exchange", stringFormatter (show exchange))
-        , ("type", stringFormatter (show orderType))
-        ]
-    fields = Map.fromList [("price", FieldFloat price), ("quantity", FieldFloat quantity)]
-    utcTime = posixSecondsToUTCTime $ realToFrac $ fromIntegral time / (1000 * 1000)
-    stringFormatter = formatKey F.string
+  toInfluxData (BaseOrder exchange currency price quantity time orderType) =
+    (tags, fields, Just utcTime :: Maybe UTCTime)
+    where
+      tags =
+        Map.fromList
+          [ ("currency", stringFormatter (show currency))
+          , ("exchange", stringFormatter (show exchange))
+          , ("type", stringFormatter (show orderType))
+          ]
+      fields = Map.fromList [("price", FieldFloat price), ("quantity", FieldFloat quantity)]
+      utcTime = posixSecondsToUTCTime $ realToFrac $ fromIntegral time / (1000 * 1000)
+      stringFormatter = formatKey F.string
 
 instance KafkaData [BaseOrder] where
   toKafkaData order = makeMessage $ BL.toStrict $ Aeson.encode order

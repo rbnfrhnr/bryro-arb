@@ -1,13 +1,15 @@
 {-# LANGUAGE DataKinds #-}
 
-module Finance.OrderBook.Types
+module Finance.OrderBook.Internal
   ( OrderBook(..)
   , OrderKey(..)
   , OrderBookCollection(..)
   ) where
 
 import           Data.Map
-import           Finance.Types
+import           Finance.Currency
+import           Finance.Exchange
+import           Finance.Order
 
 {- | This Data-Structure keeps track of all the Ask and Bid prices of a certain Currency Pair.
      It holds prices regardless of their source exchange. It's ordered by Currency Pair.
@@ -15,9 +17,10 @@ import           Finance.Types
 -}
 data OrderBook =
   OrderBook
-    { depthBookCurrencyPair :: !CurrencyPair -- ^ Identifier for this Depthbook. (LTCUSD, XRPUSD etc)
-    , depthBookAsk          :: Map OrderKey (Order AskOrder) -- ^ Collection of asking prices for this CurrencyPair
-    , depthBookBid          :: Map OrderKey (Order BidOrder) -- ^ Collection of biding prices fot this CurrencyPair
+    { orderBookCurrencyPair :: !CurrencyPair -- ^ Identifier for this Depthbook. (LTCUSD, XRPUSD etc)
+    , orderBookExchange     :: Exchange
+    , orderBookAsk          :: Map OrderKey (Order AskOrder) -- ^ Collection of asking prices for this CurrencyPair
+    , orderBookBid          :: Map OrderKey (Order BidOrder) -- ^ Collection of biding prices fot this CurrencyPair
     }
   deriving (Show)
 

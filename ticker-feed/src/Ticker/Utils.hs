@@ -15,23 +15,40 @@ module Ticker.Utils
   , writeOutIO
   ) where
 
-import qualified Control.Concurrent.Chan as C
-import qualified Data.ByteString.Lazy    as BL
-import qualified Data.Map                as Map
+import qualified Control.Concurrent.Chan  as C
+import qualified Data.ByteString.Lazy     as BL
+import qualified Data.Map                 as Map
+import qualified Database.InfluxDB.Format as F
 
 import           Control.Monad
 import           Data.Aeson
-import           Data.Time               (UTCTime)
-import           Data.Time.Clock.POSIX   (posixSecondsToUTCTime)
+import           Data.Time                (UTCTime)
+import           Data.Time.Clock.POSIX    (posixSecondsToUTCTime)
+import           Database.InfluxDB        (formatKey)
 import           Database.InfluxDB.Line
-import           Finance.OrderBook.Types
-import           Finance.Types
-import           Finance.Utils
+import           Finance.Order
+import           Finance.OrderBook
+import           Finance.Tick
 import           Network.Kafka
 import           Network.Kafka.Producer
 import           System.IO
-import           Utils.Influx            as Influx
-import           Utils.Kafka             as Kafka
+import           Utils.Influx             as Influx
+import           Utils.Kafka              as Kafka
+
+instance InfluxData Tick where
+  toInfluxData (Tick (askPrice, askQty) (bidPrice, bidQty) currency exchange timestamp) =
+    (tags, fields, Just utcTime :: Maybe UTCTime)
+    where
+      tags = Map.fromList [("currency", stringFormatter (show currency)), ("exchange", stringFormatter (show exchange))]
+      fields =
+        Map.fromList
+          [ ("askPrice", FieldFloat askPrice)
+          , ("askQty", FieldFloat askQty)
+          , ("bidPrice", FieldFloat bidPrice)
+          , ("bidQty", FieldFloat bidQty)
+          ]
+      utcTime = posixSecondsToUTCTime $ realToFrac $ fromIntegral timestamp / (1000 * 1000)
+      stringFormatter = formatKey F.string
 
 instance KafkaData Tick where
   toKafkaData tick = makeMessage $ BL.toStrict $ encode tick
@@ -39,8 +56,9 @@ instance KafkaData Tick where
 instance WriteOutIO Kafka.WriteKafka where
   writeOutIO wKafka tick = Kafka.writeToKafka (\msg -> return ()) wKafka tick >> return wKafka :: IO Kafka.WriteKafka
 
---instance WriteOutIO Influx.InfluxConnection where
---  writeOutIO influxCon tick = Influx.writeToInflux influxCon tick
+instance WriteOutIO Influx.InfluxConnection where
+  writeOutIO influxCon tick = Influx.writeToInflux influxCon tick
+
 instance WriteOutIO SimpleOut where
   writeOutIO simple tick = printTickFiltered (Just "LTCUSDBitstamp") tick >> hFlush stdout >> return SimpleOut
 
@@ -77,15 +95,13 @@ toCurrencyExchangeKey order = show (orderCurrencyPair order) ++ show (orderExcha
 
 printTickFiltered :: Maybe CurrencyExchangeKey -> Tick -> IO ()
 printTickFiltered Nothing tick = printTick tick
-printTickFiltered (Just currExchangeKey) tick@(Tick (Just ask) (Just bid) (Just currency) (Just exchange) timestamp)
+printTickFiltered (Just currExchangeKey) tick@(Tick ask bid currency exchange timestamp)
   | currExchangeKey == show currency ++ show exchange = printTick tick
   | otherwise = return ()
-printTickFiltered _ _ = return ()
 
 printTick :: Tick -> IO ()
-printTick (Tick (Just ask) (Just bid) (Just currency) (Just exchange) timestamp) =
+printTick (Tick ask bid currency exchange timestamp) =
   putStrLn (show exchange ++ " -> " ++ show currency ++ " - " ++ show ask ++ " / " ++ show bid) >> hFlush stdout
-printTick _ = return ()
 
 class WriteOutIO a where
   writeOutIO :: a -> Tick -> IO a

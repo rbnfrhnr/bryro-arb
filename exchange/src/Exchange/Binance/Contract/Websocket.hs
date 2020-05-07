@@ -13,7 +13,9 @@ import           Data.Aeson
 import           Data.ByteString
 import           Exchange.Types
 import           Exchange.Utils
-import           Finance.Types
+import           Finance.Currency
+import           Finance.Exchange
+import           Finance.Order
 
 newtype BinanceMessage =
   OrderUpdateMessage OrderUpdatePayload
