@@ -17,7 +17,7 @@ import           Exchange.Types
 import           Exchange.Utils
 import           Finance.Types
 
-parseToOrder :: (BL.ByteString -> Either String [Order])
+parseToOrder :: (BL.ByteString -> Either String [BaseOrder])
 parseToOrder = fmap toOrder . parseBinanceMessage
 
 parseBinanceMessage :: (BL.ByteString -> Either String BinanceMessage)

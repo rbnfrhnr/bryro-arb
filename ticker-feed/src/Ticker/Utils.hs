@@ -69,11 +69,11 @@ data TickerST =
     { tickerDBookMap     :: !DBookMap
     , tickerBuffer       :: !TickBuffer
     , tickerDestinations :: ![Destination]
-    , tickerOrderQueue   :: C.Chan [Order]
+    , tickerOrderQueue   :: C.Chan [BaseOrder]
     }
 
-toCurrencyExchangeKey :: Order -> String
-toCurrencyExchangeKey order = show (getCurrencyPair order) ++ show (getExchangeFromOrder order)
+toCurrencyExchangeKey :: BaseOrder -> String
+toCurrencyExchangeKey order = show (orderCurrencyPair order) ++ show (orderExchange order)
 
 printTickFiltered :: Maybe CurrencyExchangeKey -> Tick -> IO ()
 printTickFiltered Nothing tick = printTick tick

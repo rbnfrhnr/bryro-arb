@@ -1,3 +1,5 @@
+{-# LANGUAGE DataKinds #-}
+
 module Finance.Arbitrage.Types
   ( Spread(..)
   , SpreadBook
@@ -10,8 +12,8 @@ import           Finance.Types
 
 data Spread =
   Spread
-    { spreadBid  :: !Order
-    , spreadAsks :: ![Order]
+    { spreadBid  :: !(Order BidOrder)
+    , spreadAsks :: ![Order AskOrder]
     }
   deriving (Show)
 

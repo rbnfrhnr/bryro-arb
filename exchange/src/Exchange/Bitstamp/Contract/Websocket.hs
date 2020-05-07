@@ -84,9 +84,10 @@ instance FromJSON BitstampMessage where
 
 instance ExchangeOrder BitstampMessage where
   toOrder (OrderBookUpdateMessage message) =
-    Prelude.map (\[price, qty] -> AskOrder (mapToBaseOrder currencyPair price qty msgTimestamp)) asksArray ++
-    Prelude.map (\[price, qty] -> BidOrder (mapToBaseOrder currencyPair price qty msgTimestamp)) bidsArray
+    Prelude.map (\[price, qty] -> partialOrder (byteStringToDouble price) (byteStringToDouble qty) Ask) asksArray ++
+    Prelude.map (\[price, qty] -> partialOrder (byteStringToDouble price) (byteStringToDouble qty) Bid) bidsArray
     where
+      partialOrder price qty = BaseOrder Bitstamp currencyPair price qty (byteStringToInteger msgTimestamp)
       msgTimestamp = fOrderMsgMicroTimestamp (fullOrderMsgData message)
       currencyPair = getCurrencyPairFromMessage message
       asksArray = fOrderBookBids (fullOrderMsgData message)
@@ -96,10 +97,6 @@ instance ExchangeOrder BitstampMessage where
 instance (ExchangeOrder a) => ExchangeOrder (Maybe a) where
   toOrder (Just message) = toOrder message
   toOrder Nothing        = []
-
-mapToBaseOrder :: CurrencyPair -> ByteString -> ByteString -> ByteString -> BaseOrder
-mapToBaseOrder currency price qty timestamp =
-  BaseOrder Bitstamp currency (byteStringToDouble price) (byteStringToDouble qty) (byteStringToInteger timestamp)
 
 getCurrencyPairFromMessage :: OrderBookUpdatePayload -> CurrencyPair
 getCurrencyPairFromMessage (OrderBookUpdatePayload _ channel _) = getCurrencyPairFromChannel $ BC.unpack channel

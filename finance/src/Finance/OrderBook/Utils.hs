@@ -1,10 +1,11 @@
+{-# LANGUAGE DataKinds #-}
+
 module Finance.OrderBook.Utils
   ( getHigherBids
   , getLowerAsks
-  , getTick
   , updateDepthBook
-  , updateDepthBookOrders
   , openOrderBook
+  , getTick
   ) where
 
 import qualified Data.Map                as Map
@@ -33,102 +34,47 @@ import           Finance.Utils
 
      prop> \(BaseOrder exc cur price qty ts) -> exc == Bitstamp && cur == LTCUSD && (price >= 9 && price <= 10) && (qty >= 0 && qty <= 10)
 -}
-updateDepthBook :: OrderBook -> Order -> OrderBook
-updateDepthBook book@(OrderBook currencyPair askbook bidbook) order@(AskOrder baseOrder)
-  | qty > 0.0 = OrderBook currencyPair orderInsertedAskBook bidbook
-  | otherwise = OrderBook currencyPair orderDeletedAskBook bidbook
+updateDepthBook :: OrderBook -> BaseOrder -> OrderBook
+updateDepthBook book order
+  | (Just order) <- maybeAskOrder = updateAskOrderBook book order
+  | (Just order) <- maybeBidOrder = updateBidOrderBook book order
   where
-    orderDeletedAskBook = Map.delete (toOrderKey order) askbook
-    orderInsertedAskBook = Map.insert (toOrderKey order) order askbook
-    qty = orderQuantity baseOrder
-updateDepthBook book@(OrderBook currencyPair askbook bidbook) order@(BidOrder baseOrder)
-  | qty > 0.0 = OrderBook currencyPair askbook orderInsertedBidBook
-  | otherwise = OrderBook currencyPair askbook orderDeletedBidBook
+    maybeAskOrder = toAskOrder order
+    maybeBidOrder = toBidOrder order
+
+updateBidOrderBook :: OrderBook -> Order BidOrder -> OrderBook
+updateBidOrderBook (OrderBook currency askBook bidBook) bidOrder
+  | qty > 0.0 = OrderBook currency askBook (Map.insert orderKey bidOrder bidBook)
+  | otherwise = OrderBook currency askBook (Map.delete orderKey bidBook)
   where
-    orderInsertedBidBook = Map.insert (toOrderKey order) order bidbook
-    orderDeletedBidBook = Map.delete (toOrderKey order) bidbook
-    qty = orderQuantity baseOrder
+    order = unBidOrder bidOrder
+    orderKey = toOrderKey order
+    qty = orderQuantity order
 
-updateDepthBookOrders :: OrderBook -> [Order] -> OrderBook
-updateDepthBookOrders = foldl updateDepthBook
-
-{- | A collection and an array of Orders can be provided and the corresponding DepthBook will be updated.
-     The correct DepthBook can be derived from the Order
--}
-updateCollection :: OrderBookCollection -> [Order] -> OrderBookCollection
-updateCollection collection (order:xs)
-  | (Just book) <- maybeBook =
-    updateCollection
-      (Map.insert (depthBookCurrencyPair (updateDepthBook book order)) (updateDepthBook book order) collection)
-      xs
-  | otherwise = updateCollection collection xs
+updateAskOrderBook :: OrderBook -> Order AskOrder -> OrderBook
+updateAskOrderBook (OrderBook currency askBook bidBook) askOrder
+  | qty > 0.0 = OrderBook currency (Map.insert orderKey askOrder askBook) bidBook
+  | otherwise = OrderBook currency (Map.delete orderKey askBook) bidBook
   where
-    maybeBook = Map.lookup currencyPair collection
-    currencyPair = getCurrencyPair order
-
-toOrderKey :: Order -> OrderKey
-toOrderKey order = OrderKey (getPriceFromOrder order)
+    order = unAskOrder askOrder
+    orderKey = toOrderKey order
+    qty = orderQuantity order
 
 {- | This function returns all the Ask prices which are lower than the provided Bid price for a given DepthBook -}
-getLowerAsks :: Order -> OrderBook -> [Order]
-getLowerAsks order@(AskOrder _) _ = []
-getLowerAsks order@(BidOrder _) (OrderBook _ askBook _) = (Map.elems . fst) (Map.split (toOrderKey order) askBook)
+getLowerAsks :: Order BidOrder -> OrderBook -> [Order AskOrder]
+getLowerAsks order (OrderBook _ askBook _) = (Map.elems . fst) (Map.split (toOrderKey (unBidOrder order)) askBook)
 
 {- | This function returns all the Bid prices which are higher than the provided asking price for a given DepthBook -}
-getHigherBids :: Order -> OrderBook -> [Order]
-getHigherBids order@(BidOrder _) _ = []
-getHigherBids order@(AskOrder _) (OrderBook _ _ bidBook) = (Map.elems . snd) (Map.split (toOrderKey order) bidBook)
+getHigherBids :: Order AskOrder -> OrderBook -> [Order BidOrder]
+getHigherBids order (OrderBook _ _ bidBook) = (Map.elems . snd) (Map.split (toOrderKey (unAskOrder order)) bidBook)
 
 {- | Constructor function for a Depthbook -}
 openOrderBook :: CurrencyPair -> OrderBook
 openOrderBook currencyPair = OrderBook currencyPair Map.empty Map.empty
 
-{- | Constructor function for DepthBook-Collection -}
-createOrderBookCollection :: OrderBookCollection
-createOrderBookCollection = Map.empty
+toOrderKey :: BaseOrder -> OrderKey
+toOrderKey order = OrderKey (orderCurrentPrice order)
 
-{- | Add a DepthBook to an existing DepthBook-Collection -}
-addDepthBookToCollection :: OrderBookCollection -> OrderBook -> CurrencyPair -> OrderBookCollection
-addDepthBookToCollection collection depthBookToAdd bookCurrencyPair =
-  Map.insert bookCurrencyPair depthBookToAdd collection
-
-{- | Get a DepthBook from a collection by the CurrencyPair-}
-getDepthBookFromCollection :: OrderBookCollection -> CurrencyPair -> Maybe OrderBook
-getDepthBookFromCollection collection bookCurrencyPair = Map.lookup bookCurrencyPair collection
-
-{- | extracts a tick (lowest ask and highest bid) from a given order book.
- -}
+{- todo implement function. because of refactoring it has been removed/modified but others still rely on it -}
 getTick :: OrderBook -> Tick
-getTick (OrderBook _ asks bids) = Tick askPair bidPair currencyPair exchange timestamp
-  where
-    minAsk = fmap snd (Map.lookupMin asks)
-    askPair = fmap (\order -> (getPriceFromOrder order, getQtyFromOrder order)) minAsk
-    maxBid = fmap snd (Map.lookupMax bids)
-    bidPair = fmap (\order -> (getPriceFromOrder order, getQtyFromOrder order)) maxBid
-    timestamp = getLatestTimestamp minAsk maxBid
-    currencyPair = getCurrencyPairForTick minAsk maxBid
-    exchange = getExchangeForTick minAsk maxBid
-
-getCurrencyPairForTick :: Maybe Order -> Maybe Order -> Maybe CurrencyPair
-getCurrencyPairForTick Nothing Nothing = Nothing
-getCurrencyPairForTick (Just order) Nothing = Just $ getCurrencyPair order
-getCurrencyPairForTick Nothing (Just order) = Just $ getCurrencyPair order
-getCurrencyPairForTick (Just order1) (Just order2) = Just $ getCurrencyPair order1
-
-getExchangeForTick :: Maybe Order -> Maybe Order -> Maybe Exchange
-getExchangeForTick Nothing Nothing = Nothing
-getExchangeForTick (Just order) Nothing = Just $ getExchangeFromOrder order
-getExchangeForTick Nothing (Just order) = Just $ getExchangeFromOrder order
-getExchangeForTick (Just order1) (Just order2) = Just $ getExchangeFromOrder order1
-
-getLatestTimestamp :: Maybe Order -> Maybe Order -> Int
-getLatestTimestamp Nothing Nothing = 0
-getLatestTimestamp (Just order) Nothing = getTimestampFromOrder order
-getLatestTimestamp Nothing (Just order) = getTimestampFromOrder order
-getLatestTimestamp (Just order1) (Just order2)
-  | timestamp1 > timestamp2 = timestamp1
-  | timestamp2 > timestamp1 = timestamp2
-  | otherwise = timestamp1
-  where
-    timestamp1 = getTimestampFromOrder order1
-    timestamp2 = getTimestampFromOrder order2
+getTick book = Tick Nothing Nothing Nothing Nothing 0

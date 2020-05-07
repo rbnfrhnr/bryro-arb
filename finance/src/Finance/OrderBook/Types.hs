@@ -1,3 +1,5 @@
+{-# LANGUAGE DataKinds #-}
+
 module Finance.OrderBook.Types
   ( OrderBook(..)
   , OrderKey(..)
@@ -14,8 +16,8 @@ import           Finance.Types
 data OrderBook =
   OrderBook
     { depthBookCurrencyPair :: !CurrencyPair -- ^ Identifier for this Depthbook. (LTCUSD, XRPUSD etc)
-    , depthBookAsk          :: Map OrderKey Order -- ^ Collection of asking prices for this CurrencyPair
-    , depthBookBid          :: Map OrderKey Order -- ^ Collection of biding prices fot this CurrencyPair
+    , depthBookAsk          :: Map OrderKey (Order AskOrder) -- ^ Collection of asking prices for this CurrencyPair
+    , depthBookBid          :: Map OrderKey (Order BidOrder) -- ^ Collection of biding prices fot this CurrencyPair
     }
   deriving (Show)
 

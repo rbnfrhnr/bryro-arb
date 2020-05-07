@@ -61,14 +61,14 @@ runTransform tickerST@(TickerST dBookMap tBuffer _ queue) =
   runTransform >>
   return ()
 
-handleDepthBook :: TickerST -> Order -> TickerST
+handleDepthBook :: TickerST -> BaseOrder -> TickerST
 handleDepthBook tickerST@(TickerST dBookMap _ _ _) order =
   case Map.lookup dBookMapKey dBookMap of
     Just depthBook -> tickerST {tickerDBookMap = Map.insert dBookMapKey (updateDepthBook depthBook order) dBookMap}
     Nothing -> handleDepthBook tickerST {tickerDBookMap = Map.insert dBookMapKey newOrderBook dBookMap} order
   where
     dBookMapKey = toCurrencyExchangeKey order
-    newOrderBook = openOrderBook (getCurrencyPair order)
+    newOrderBook = openOrderBook (orderCurrencyPair order)
 
 bufferedWrite :: TickerST -> CurrencyExchangeKey -> Maybe Tick -> Maybe OrderBook -> IO TickerST
 bufferedWrite tickerST@(TickerST dbookMap tickBuffer dest queue) key (Just currentTick) (Just book)
@@ -85,12 +85,12 @@ bufferedWrite tickerST@(TickerST dbookMap tickBuffer dest queue) key Nothing (Ju
     updatedTickBuffer = Map.insert key tickPair tickBuffer
 bufferedWrite tickerST key lastTick book = return tickerST
 
-decodeOrders :: Either KafkaClientError [BS.ByteString] -> IO [Order]
-decodeOrders (Right msg) = return (foldl filteredDecode [] msg) :: IO [Order]
+decodeOrders :: Either KafkaClientError [BS.ByteString] -> IO [BaseOrder]
+decodeOrders (Right msg) = return (foldl filteredDecode [] msg) :: IO [BaseOrder]
 decodeOrders (Left err)  = fail "vla"
 
-filteredDecode :: [Order] -> BS.ByteString -> [Order]
+filteredDecode :: [BaseOrder] -> BS.ByteString -> [BaseOrder]
 filteredDecode orders bsMessage =
-  case decode (BL.fromStrict bsMessage) :: Maybe [Order] of
+  case decode (BL.fromStrict bsMessage) :: Maybe [BaseOrder] of
     (Just order) -> order ++ orders
     Nothing      -> orders

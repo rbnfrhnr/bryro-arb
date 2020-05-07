@@ -20,7 +20,7 @@ import           Exchange.Utils
 import           Finance.Types
 import           Network.WebSockets
 
-parseToOrder :: (BL.ByteString -> Either String [Order])
+parseToOrder :: (BL.ByteString -> Either String [BaseOrder])
 parseToOrder = fmap toOrder . parseKrakenMessage
 
 parseKrakenMessage :: (BL.ByteString -> Either String KW.KrakenMessage)

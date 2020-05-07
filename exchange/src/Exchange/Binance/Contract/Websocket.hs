@@ -41,10 +41,10 @@ instance FromJSON BinanceMessage where
 
 instance ExchangeOrder BinanceMessage where
   toOrder (OrderUpdateMessage message) =
-    Prelude.map (\[price, qty] -> AskOrder (baseOrder price qty)) asksArray ++
-    Prelude.map (\[price, qty] -> BidOrder (baseOrder price qty)) bidsArray
+    Prelude.map (\[price, qty] -> baseOrder (byteStringToDouble price) (byteStringToDouble qty) Ask) asksArray ++
+    Prelude.map (\[price, qty] -> baseOrder (byteStringToDouble price) (byteStringToDouble qty) Bid) bidsArray
     where
-      baseOrder price qty = BaseOrder Binance currencyPair (byteStringToDouble price) (byteStringToDouble qty) timestamp
+      baseOrder price qty = BaseOrder Binance currencyPair price qty timestamp
       timestamp = eventTime message
       currencyPair = toCurrencyPair $ symbol message
       asksArray = asks message

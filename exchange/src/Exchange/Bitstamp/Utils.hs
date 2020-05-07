@@ -30,7 +30,7 @@ orderChannelsToSubscribe =
   , "{\"event\": \"bts:subscribe\",\"data\": {\"channel\": \"diff_order_book_bchusd\"}}"
   ]
 
-parseToOrder :: (BL.ByteString -> Either String [Order])
+parseToOrder :: (BL.ByteString -> Either String [BaseOrder])
 parseToOrder = fmap toOrder . parseBitstampMessage
 
 parseBitstampMessage :: (BL.ByteString -> Either String BitstampMessage)

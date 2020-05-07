@@ -115,10 +115,10 @@ getTimestampFromOrder [] ([_, _, timestamp]:xs) = timestamp
 
 instance ExchangeOrder KrakenMessage where
   toOrder (OrderBookUpdateMessage message) =
-    map (\(price:(qty:xs)) -> AskOrder (partialBaseOrder (byteStringToDouble price) (byteStringToDouble qty))) asksArray ++
-    map (\(price:(qty:xs)) -> BidOrder (partialBaseOrder (byteStringToDouble price) (byteStringToDouble qty))) bidsArray
+    map (\(price:(qty:xs)) -> partialBaseOrder (byteStringToDouble price) (byteStringToDouble qty) Ask) asksArray ++
+    map (\(price:(qty:xs)) -> partialBaseOrder (byteStringToDouble price) (byteStringToDouble qty) Bid) bidsArray
     where
-      partialBaseOrder = mapToBaseOrder currPair timestamp
+      partialBaseOrder price qty = BaseOrder Kraken currPair price qty timestamp
       timestamp = fromInteger $ krakenOrderTimestamp message
       currPair = getCurrencyPairFromMessage message
       asksArray = krakenOrderAsks message
@@ -133,9 +133,6 @@ mapToPriceQty :: [[B.ByteString]] -> [[Double]]
 mapToPriceQty [] = []
 mapToPriceQty ([price, qty, _]:xs) = mapToPriceQty xs ++ [[byteStringToDouble price, byteStringToDouble qty]]
 mapToPriceQty (x:xs) = mapToPriceQty xs
-
-mapToBaseOrder :: CurrencyPair -> Int -> Double -> Double -> BaseOrder
-mapToBaseOrder currency timestamp price qty = BaseOrder Kraken currency price qty timestamp
 
 getCurrencyPairFromMessage :: OrderBookUpdatePayload -> CurrencyPair
 getCurrencyPairFromMessage updatePayload = getCurrencyPairFromChannel $ BC.unpack $ krakenOrderSymbol updatePayload
