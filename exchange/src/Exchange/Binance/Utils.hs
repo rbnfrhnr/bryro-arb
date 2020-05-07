@@ -15,7 +15,7 @@ import           Control.Concurrent
 import           Exchange.Binance.Contract.Websocket
 import           Exchange.Types
 import           Exchange.Utils
-import           Finance.Order
+import           Finance
 
 parseToOrder :: (BL.ByteString -> Either String [BaseOrder])
 parseToOrder = fmap toOrder . parseBinanceMessage

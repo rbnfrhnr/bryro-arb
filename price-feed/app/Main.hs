@@ -27,7 +27,7 @@ import           Exchange.Binance.Utils   as Binance
 import           Exchange.Bitstamp.Utils  as Bitstamp
 import           Exchange.Handler
 import           Exchange.Kraken.Utils    as Kraken
-import           Finance.Order
+import           Finance
 import           Network.Kafka
 import           Network.Kafka.Producer
 import           Network.Kafka.Protocol

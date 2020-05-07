@@ -17,7 +17,7 @@ import qualified Utils.WebSocket                    as Socket
 import           Control.Concurrent
 import           Exchange.Types
 import           Exchange.Utils
-import           Finance.Order
+import           Finance
 import           Network.WebSockets
 
 parseToOrder :: (BL.ByteString -> Either String [BaseOrder])

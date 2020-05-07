@@ -19,7 +19,7 @@ import           Control.Monad                        (foldM)
 import           Exchange.Bitstamp.Contract.Websocket as BWS
 import           Exchange.Types
 import           Exchange.Utils
-import           Finance.Order
+import           Finance
 import           Network.WebSockets
 
 orderChannelsToSubscribe :: [String]

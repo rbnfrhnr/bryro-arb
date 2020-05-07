@@ -18,9 +18,7 @@ import           Exchange.Binance.Utils  as Binance
 import           Exchange.Bitstamp.Utils as Bitstamp
 import           Exchange.Handler
 import           Exchange.Kraken.Utils   as Kraken
-import           Finance.Order
-import           Finance.OrderBook
-import           Finance.Tick
+import           Finance
 import           Network.Kafka
 import           Network.Kafka.Producer
 import           System.FilePath

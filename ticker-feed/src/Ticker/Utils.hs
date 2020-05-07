@@ -26,9 +26,7 @@ import           Data.Time                (UTCTime)
 import           Data.Time.Clock.POSIX    (posixSecondsToUTCTime)
 import           Database.InfluxDB        (formatKey)
 import           Database.InfluxDB.Line
-import           Finance.Order
-import           Finance.OrderBook
-import           Finance.Tick
+import           Finance
 import           Network.Kafka
 import           Network.Kafka.Producer
 import           System.IO
