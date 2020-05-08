@@ -3,8 +3,8 @@
 
 module Utils.Influx
   ( Fields
-  , InfluxConfig(..)
-  , InfluxHandle(..)
+  , InfluxConfig
+  , InfluxHandle
   , InfluxData
   , Keys
   , parseConfig
@@ -24,27 +24,7 @@ import           Control.Lens
 import           Data.Configurator.Types
 import           Data.Time.Clock
 import           Database.InfluxDB        (formatKey)
-
-type Keys = (Map.Map Influx.Key Influx.Key)
-
-type Fields = (Map.Map Influx.Key Influx.LineField)
-
-data InfluxConfig =
-  InfluxConfig
-    { influxHost        :: !T.Text
-    , influxUser        :: !T.Text
-    , influxPassword    :: !T.Text
-    , influxMeasurement :: !String
-    , influxDb          :: !String
-    , influxBatchSize   :: !Int
-    }
-
-data InfluxHandle =
-  InfluxHandle
-    { influxBatch            :: ![Influx.Line UTCTime]
-    , influxConnectionParams :: !Influx.WriteParams
-    , influxConfig           :: !InfluxConfig
-    }
+import           Utils.Influx.Internal
 
 class InfluxData a where
   toInfluxData :: a -> (Keys, Fields, Maybe UTCTime)
@@ -84,8 +64,3 @@ writeAsync (InfluxHandle batch params cfg) rawData
     measurement = influxMeasurement cfg
     dataLine = toDataLine measurement (toInfluxData rawData)
     updatedBatch = dataLine : batch
-
-toDataLine :: String -> (Keys, Fields, Maybe UTCTime) -> Influx.Line UTCTime
-toDataLine meas (tags, fields, timestamp) = Influx.Line (measurement meas) tags fields timestamp
-  where
-    measurement = F.formatMeasurement F.string
