@@ -59,21 +59,21 @@ runFeed cfg = do
     fmap
       (\kafkaCfg -> writeKafkaState (Kafka.configToKafkaState kafkaCfg) "bryro-orders" 1)
       (Kafka.createKafkaConfig cfg)
-  influxConn <- Influx.getConnection cfg
+  influxHandle <- Influx.new cfg
   let worker queue influxConn writeKafkaST = do
         orders <- Chan.readChan queue
                                       {- todo can most definitely be made into one fold -}
         writeKafkaST2 <- writeToKafka kafkaRespHandler writeKafkaST orders
-        influxConn2 <- foldM writeToInflux influxConn orders
-        worker queue influxConn2 writeKafkaST2
-  worker orderQueue influxConn writeKafkaST
+        influxHandle' <- foldM writeAsync influxConn orders
+        worker queue influxHandle' writeKafkaST2
+  worker orderQueue influxHandle writeKafkaST
 
 kafkaRespHandler :: Either KafkaClientError [ProduceResponse] -> IO ()
 kafkaRespHandler (Right msgs) = return ()
 kafkaRespHandler (Left err)   = print err
 
 instance InfluxData BaseOrder where
-  toInfluxData (BaseOrder exchange currency price quantity time orderType) =
+  toInfluxData (BaseOrder exchange currency price quantity time orderType) = 
     (tags, fields, Just utcTime :: Maybe UTCTime)
     where
       tags =

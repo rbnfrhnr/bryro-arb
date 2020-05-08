@@ -38,12 +38,12 @@ withConfig (Right cfg) = do
   kafkaState <- fmap Kafka.configToKafkaState (Kafka.createKafkaConfig cfg)
   orderQueue <- Chan.newChan
   Bitstamp.subscribeHandler $ decodeAndEnQueueHandler Bitstamp.parseToOrder orderQueue
-  influxConn <- Influx.getConnection cfg :: IO Influx.InfluxConnection
+  influxHandle <- Influx.new cfg :: IO Influx.InfluxHandle
   runTransform
     (TickerST
        Map.empty
        Map.empty
-       [Destination SimpleOut, Destination (writeKafkaState kafkaState "bryro-ticker" 0), Destination influxConn]
+       [Destination SimpleOut, Destination (writeKafkaState kafkaState "bryro-ticker" 0), Destination influxHandle]
        orderQueue)
 
 --  Kraken.subscribeHandler $ decodeAndEnQueueHandler Kraken.parseToOrder orderQueue

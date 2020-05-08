@@ -54,8 +54,8 @@ instance KafkaData Tick where
 instance WriteOutIO Kafka.WriteKafka where
   writeOutIO wKafka tick = Kafka.writeToKafka (\msg -> return ()) wKafka tick >> return wKafka :: IO Kafka.WriteKafka
 
-instance WriteOutIO Influx.InfluxConnection where
-  writeOutIO influxCon tick = Influx.writeToInflux influxCon tick
+instance WriteOutIO Influx.InfluxHandle where
+  writeOutIO influxCon tick = Influx.writeAsync influxCon tick
 
 instance WriteOutIO SimpleOut where
   writeOutIO simple tick = printTickFiltered (Just "LTCUSDBitstamp") tick >> hFlush stdout >> return SimpleOut

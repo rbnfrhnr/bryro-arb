@@ -2,13 +2,15 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Utils.Influx
-  ( InfluxConfig(..)
-  , InfluxConnection(..)
+  ( Fields
+  , InfluxConfig(..)
+  , InfluxHandle(..)
   , InfluxData
-  , createInfluxConfig
-  , getConnection
+  , Keys
+  , parseConfig
+  , new
   , toInfluxData
-  , writeToInflux
+  , writeAsync
   ) where
 
 import qualified Data.Configurator        as Conf
@@ -23,6 +25,10 @@ import           Data.Configurator.Types
 import           Data.Time.Clock
 import           Database.InfluxDB        (formatKey)
 
+type Keys = (Map.Map Influx.Key Influx.Key)
+
+type Fields = (Map.Map Influx.Key Influx.LineField)
+
 data InfluxConfig =
   InfluxConfig
     { influxHost        :: !T.Text
@@ -33,18 +39,18 @@ data InfluxConfig =
     , influxBatchSize   :: !Int
     }
 
-data InfluxConnection =
-  InfluxConnection
+data InfluxHandle =
+  InfluxHandle
     { influxBatch            :: ![Influx.Line UTCTime]
     , influxConnectionParams :: !Influx.WriteParams
     , influxConfig           :: !InfluxConfig
     }
 
 class InfluxData a where
-  toInfluxData :: a -> (Map.Map Influx.Key Influx.Key, Map.Map Influx.Key Influx.LineField, Maybe UTCTime)
+  toInfluxData :: a -> (Keys, Fields, Maybe UTCTime)
 
-createInfluxConfig :: Config -> IO InfluxConfig
-createInfluxConfig config = do
+parseConfig :: Config -> IO InfluxConfig
+parseConfig config = do
   (Just host) <- Conf.lookup config "influx.host"
   (Just user) <- Conf.lookup config "influx.user"
   (Just password) <- Conf.lookup config "influx.password"
@@ -53,10 +59,10 @@ createInfluxConfig config = do
   (Just batchSize) <- Conf.lookup config "influx.batchSize"
   return (InfluxConfig host user password measurement db batchSize)
 
-getConnectionConf :: InfluxConfig -> IO InfluxConnection
-getConnectionConf cfg =
+newFromConf :: InfluxConfig -> IO InfluxHandle
+newFromConf cfg =
   return $
-  InfluxConnection
+  InfluxHandle
     []
     (Influx.writeParams db & Influx.authentication ?~ cred & Influx.server . Influx.host .~ influxHost cfg &
      Influx.precision .~
@@ -66,23 +72,20 @@ getConnectionConf cfg =
     db = Influx.formatDatabase F.string (influxDb cfg)
     cred = Influx.credentials (influxUser cfg) (influxPassword cfg)
 
-getConnection :: Config -> IO InfluxConnection
-getConnection cfgFile = createInfluxConfig cfgFile >>= getConnectionConf
+new :: Config -> IO InfluxHandle
+new cfgFile = parseConfig cfgFile >>= newFromConf
 
-writeToInflux :: (Show a, InfluxData a) => InfluxConnection -> a -> IO InfluxConnection
-writeToInflux (InfluxConnection batch params cfg) rawData
-  | length batch > batchSize =
-    forkIO (Influx.writeBatch params (influxDataToLine measurement (toInfluxData rawData) : batch)) >>
-    return (InfluxConnection [] params cfg)
-  | otherwise = return (InfluxConnection (influxDataToLine measurement (toInfluxData rawData) : batch) params cfg)
+writeAsync :: (Show a, InfluxData a) => InfluxHandle -> a -> IO InfluxHandle
+writeAsync (InfluxHandle batch params cfg) rawData
+  | length batch > batchSize = forkIO (Influx.writeBatch params updatedBatch) >> return (InfluxHandle [] params cfg)
+  | otherwise = return (InfluxHandle updatedBatch params cfg)
   where
     batchSize = influxBatchSize cfg
     measurement = influxMeasurement cfg
+    dataLine = toDataLine measurement (toInfluxData rawData)
+    updatedBatch = dataLine : batch
 
-influxDataToLine ::
-     String
-  -> (Map.Map Influx.Key Influx.Key, Map.Map Influx.Key Influx.LineField, Maybe UTCTime)
-  -> Influx.Line UTCTime
-influxDataToLine meas (tags, fields, timestamp) = Influx.Line (measurement meas) tags fields timestamp
+toDataLine :: String -> (Keys, Fields, Maybe UTCTime) -> Influx.Line UTCTime
+toDataLine meas (tags, fields, timestamp) = Influx.Line (measurement meas) tags fields timestamp
   where
     measurement = F.formatMeasurement F.string
