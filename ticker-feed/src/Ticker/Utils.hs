@@ -51,8 +51,8 @@ instance InfluxData Tick where
 instance KafkaData Tick where
   toKafkaData tick = makeMessage $ BL.toStrict $ encode tick
 
-instance WriteOutIO Kafka.WriteKafka where
-  writeOutIO wKafka tick = Kafka.writeToKafka (\msg -> return ()) wKafka tick >> return wKafka :: IO Kafka.WriteKafka
+instance WriteOutIO Kafka.WriteHandle where
+  writeOutIO wKafka tick = Kafka.writeToKafka wKafka tick >> return wKafka :: IO Kafka.WriteHandle
 
 instance WriteOutIO Influx.InfluxHandle where
   writeOutIO influxCon tick = Influx.writeAsync influxCon tick

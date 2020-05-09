@@ -35,7 +35,7 @@ main = configFileKafka >>= withConfig
 
 withConfig :: Either SomeException Config -> IO ()
 withConfig (Right cfg) = do
-  kafkaState <- fmap Kafka.configToKafkaState (Kafka.createKafkaConfig cfg)
+  kafkaConfig <- Kafka.createKafkaConfig cfg
   orderQueue <- Chan.newChan
   Bitstamp.subscribeHandler $ decodeAndEnQueueHandler Bitstamp.parseToOrder orderQueue
   influxHandle <- Influx.new cfg :: IO Influx.InfluxHandle
@@ -43,7 +43,7 @@ withConfig (Right cfg) = do
     (TickerST
        Map.empty
        Map.empty
-       [Destination SimpleOut, Destination (writeKafkaState kafkaState "bryro-ticker" 0), Destination influxHandle]
+       [Destination SimpleOut, Destination (writeHandle kafkaConfig "bryro-ticker" 0), Destination influxHandle]
        orderQueue)
 
 --  Kraken.subscribeHandler $ decodeAndEnQueueHandler Kraken.parseToOrder orderQueue

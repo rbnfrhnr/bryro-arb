@@ -55,25 +55,18 @@ runFeed cfg = do
   Bitstamp.subscribeHandler $ decodeAndEnQueueHandler Bitstamp.parseToOrder orderQueue
   Kraken.subscribeHandler $ decodeAndEnQueueHandler Kraken.parseToOrder orderQueue
   Binance.subscribeHandler $ decodeAndEnQueueHandler Binance.parseToOrder orderQueue
-  writeKafkaST <-
-    fmap
-      (\kafkaCfg -> writeKafkaState (Kafka.configToKafkaState kafkaCfg) "bryro-orders" 1)
-      (Kafka.createKafkaConfig cfg)
+  writeKafkaHandle <- fmap (\kafkaCfg -> writeHandle kafkaCfg "bryro-orders" 1) (Kafka.createKafkaConfig cfg)
   influxHandle <- Influx.new cfg
-  let worker queue influxConn writeKafkaST = do
+  let worker queue influxConn writeKafkaHandler = do
         orders <- Chan.readChan queue
                                       {- todo can most definitely be made into one fold -}
-        writeKafkaST2 <- writeToKafka kafkaRespHandler writeKafkaST orders
+        writeKafkaST2 <- writeToKafka writeKafkaHandler orders
         influxHandle' <- foldM writeAsync influxConn orders
         worker queue influxHandle' writeKafkaST2
-  worker orderQueue influxHandle writeKafkaST
-
-kafkaRespHandler :: Either KafkaClientError [ProduceResponse] -> IO ()
-kafkaRespHandler (Right msgs) = return ()
-kafkaRespHandler (Left err)   = print err
+  worker orderQueue influxHandle writeKafkaHandle
 
 instance InfluxData BaseOrder where
-  toInfluxData (BaseOrder exchange currency price quantity time orderType) = 
+  toInfluxData (BaseOrder exchange currency price quantity time orderType) =
     (tags, fields, Just utcTime :: Maybe UTCTime)
     where
       tags =
