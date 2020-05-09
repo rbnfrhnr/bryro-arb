@@ -24,6 +24,7 @@ import           Network.Kafka
 import           Network.Kafka.Consumer  (fetch', fetchMessages, fetchRequest)
 import           Network.Kafka.Producer  (produceMessages)
 import           Network.Kafka.Protocol
+import           Utils.Kafka.Internal
 
 data KafkaConfig =
   KafkaConfig
@@ -58,9 +59,6 @@ data ReadKafka =
     }
   deriving (Show)
 
-class KafkaData a where
-  toKafkaData :: a -> Message
-
 {- | lookup the config values from a given config file -}
 createKafkaConfig :: Config -> IO KafkaConfig
 createKafkaConfig config = do
@@ -92,9 +90,11 @@ writeToKafka ::
      (KafkaData a) => (Either KafkaClientError [ProduceResponse] -> IO ()) -> WriteKafka -> a -> IO WriteKafka
 writeToKafka respHandler (WriteKafka kafkaState topicName batch batchSize) rawData
   | Prelude.length batch >= (batchSize - 1) =
-    runKafka kafkaState (produceMessages (addToBatch batch topicName rawData)) >>= respHandler >>
+    runKafka kafkaState (produceMessages updatedBatch) >>= respHandler >>
     return (WriteKafka kafkaState topicName [] batchSize)
   | otherwise = return (WriteKafka kafkaState topicName (addToBatch batch topicName rawData) batchSize)
+  where
+    updatedBatch = addToBatch batch topicName rawData
 
 {- | uses ReadKafka to read from a certain topic and returns the payload as bytesString if successful-}
 readFromKafka :: ReadKafka -> IO (Either KafkaClientError [ByteString])
@@ -106,7 +106,3 @@ readFromKafka (ReadKafka state offsets parti topicName) =
        (do offset <- getLastOffset LatestTime parti topicName
            commitResp <- commitOffset (commitOffsetRequest (ConsumerGroup "ticker-consumer") topicName parti offset)
            withAnyHandle (\handle -> fetch' handle =<< fetchRequest offset parti topicName)))
-
-{- INTERNAL  (Move into Internal Module -}
-addToBatch :: (KafkaData a) => [TopicAndMessage] -> TopicName -> a -> [TopicAndMessage]
-addToBatch batch topicName payload = batch ++ [TopicAndMessage topicName (toKafkaData payload)]
