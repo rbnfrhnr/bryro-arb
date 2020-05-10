@@ -72,7 +72,7 @@ getTick :: OrderBook -> Tick
 getTick (OrderBook currency exchange asks bids) = Tick askTick bidTick currency exchange timestamp
   where
     maybeAsk = fmap snd (Map.lookupMin asks)
-    maybeBid = fmap snd (Map.lookupMin bids)
+    maybeBid = fmap snd (Map.lookupMax bids)
     timestamp = timestampOrDefault maybeAsk maybeBid
     askTick = lookupDefault (fmap unAskOrder maybeAsk)
     bidTick = lookupDefault (fmap unBidOrder maybeBid)

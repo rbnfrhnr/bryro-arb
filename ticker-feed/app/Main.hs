@@ -38,6 +38,8 @@ withConfig (Right cfg) = do
   kafkaConfig <- Kafka.createKafkaConfig cfg
   orderQueue <- Chan.newChan
   Bitstamp.subscribeHandler $ decodeAndEnQueueHandler Bitstamp.parseToOrder orderQueue
+  Kraken.subscribeHandler $ decodeAndEnQueueHandler Kraken.parseToOrder orderQueue
+  Binance.subscribeHandler $ decodeAndEnQueueHandler Binance.parseToOrder orderQueue
   influxHandle <- Influx.new cfg :: IO Influx.InfluxHandle
   runTransform
     (TickerST
@@ -46,8 +48,6 @@ withConfig (Right cfg) = do
        [Destination SimpleOut, Destination (writeHandle kafkaConfig "bryro-ticker" 0), Destination influxHandle]
        orderQueue)
 
---  Kraken.subscribeHandler $ decodeAndEnQueueHandler Kraken.parseToOrder orderQueue
---  Binance.subscribeHandler $ decodeAndEnQueueHandler Binance.parseToOrder orderQueue
 runTransform :: TickerST -> IO ()
 runTransform tickerST@(TickerST dBookMap tBuffer _ queue) =
   Chan.readChan queue >>= return . foldl handleDepthBook tickerST >>=

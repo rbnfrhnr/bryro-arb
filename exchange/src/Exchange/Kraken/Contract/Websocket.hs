@@ -62,8 +62,8 @@ mapByteStringToDouble bs = map (map byteStringToDouble) bs
 generalizeArray :: Value -> Value
 generalizeArray (Array array) =
   case V.toList array of
-    [Object subId, Object asks, Object bids, Object channel, Object symbol] ->
-      Array (V.fromList [Object subId, Object (HML.union asks bids), Object channel, Object symbol])
+    [subId, Object asks, Object bids, channel, symbol] ->
+      Array (V.fromList [subId, Object (HML.union asks bids), channel, symbol])
     _ -> Array array
 
 instance FromJSON SubscriptionPayload where
@@ -82,8 +82,8 @@ instance FromJSON ConnectionPayload where
 instance FromJSON OrderBookUpdatePayload where
   parseJSON (Array array) = do
     [subId, dataObject, String channel, String symbol] <- parseJSON (generalizeArray (Array array)) -- todo rbnfrhnr fix pattern match failure
-    asks <- getBidAsk dataObject
-    bids <- getBidAsk dataObject
+    asks <- getAsks dataObject
+    bids <- getBids dataObject
     return $
       OrderBookUpdatePayload
         (textStrictToStrict channel)
@@ -102,12 +102,17 @@ instance FromJSON KrakenMessage where
   parseJSON (Array a) = OrderBookUpdateMessage <$> parseJSON (Array a)
   parseJSON smth = fail $ "Unknown message format from Kraken:\t" ++ show smth
 
-getBidAsk :: Value -> Parser [[B.ByteString]]
-getBidAsk (Object object)
+getAsks :: Value -> Parser [[B.ByteString]]
+getAsks (Object object)
   | HML.member "as" object = fmap textArrayToStrict (object .: "as")
   | HML.member "a" object = fmap textArrayToStrict (object .: "a")
+  | otherwise = return []
+
+getBids :: Value -> Parser [[B.ByteString]]
+getBids (Object object)
   | HML.member "bs" object = fmap textArrayToStrict (object .: "bs")
   | HML.member "b" object = fmap textArrayToStrict (object .: "b")
+  | otherwise = return []
 
 getTimestampFromOrder :: [[B.ByteString]] -> [[B.ByteString]] -> B.ByteString
 getTimestampFromOrder ([_, _, timestamp]:xs) _  = timestamp
