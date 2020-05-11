@@ -33,8 +33,8 @@ data OrderUpdatePayload =
 instance FromJSON OrderUpdatePayload where
   parseJSON (Object object) =
     OrderUpdatePayload <$> fmap textToStrict (object .: "e") <*> object .: "E" <*> fmap textToStrict (object .: "s") <*>
-    fmap textArrayToStrict (object .: "a") <*>
-    fmap textArrayToStrict (object .: "b")
+    fmap textArrayToStrict (object .: "b") <*>
+    fmap textArrayToStrict (object .: "a")
 
 instance FromJSON BinanceMessage where
   parseJSON (Object v) = OrderUpdateMessage <$> parseJSON (Object v)
@@ -45,7 +45,7 @@ instance ExchangeOrder BinanceMessage where
     Prelude.map (\[price, qty] -> baseOrder (byteStringToDouble price) (byteStringToDouble qty) Bid) bidsArray
     where
       baseOrder price qty = BaseOrder Binance currencyPair price qty timestamp
-      timestamp = eventTime message
+      timestamp = 1000 * eventTime message
       currencyPair = toCurrencyPair $ symbol message
       asksArray = asks message
       bidsArray = bids message

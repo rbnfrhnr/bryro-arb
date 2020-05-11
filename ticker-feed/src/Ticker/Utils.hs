@@ -58,7 +58,7 @@ instance WriteOutIO Influx.InfluxHandle where
   writeOutIO influxCon tick = Influx.writeAsync influxCon tick
 
 instance WriteOutIO SimpleOut where
-  writeOutIO simple tick = printTickFiltered (Just "LTCUSDBitstamp") tick >> hFlush stdout >> return SimpleOut
+  writeOutIO simple tick = printTickFiltered (Just "LTCUSDBinance") tick >> hFlush stdout >> return SimpleOut
 
 instance WriteOutIO Destination where
   writeOutIO (Destination desti) tick = Destination <$> writeOutIO desti tick
