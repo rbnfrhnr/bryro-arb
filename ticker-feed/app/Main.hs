@@ -45,10 +45,7 @@ withConfig (Right cfg) = do
     (TickerHandle
        Map.empty
        Map.empty
-       [ Destination (PrintTick (Just "LTCUSDBinance"))
-       , Destination (writeHandle kafkaConfig "bryro-ticker" 0)
-       , Destination influxHandle
-       ]
+       [Destination (writeHandle kafkaConfig "bryro-ticker" 0), Destination influxHandle]
        orderQueue)
 
 runTransform :: TickerHandle -> IO ()
