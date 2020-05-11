@@ -28,7 +28,7 @@ import           Utils.Influx            as Influx
 import           Utils.Kafka             as Kafka
 
 configFileKafka :: IO (Either SomeException Config)
-configFileKafka = try $ load [Required $ "resources" </> "config.cfg"]
+configFileKafka = try $ load [Required $ "ticker-feed" </> "resources" </> "config.cfg"]
 
 main :: IO ()
 main = configFileKafka >>= withConfig
