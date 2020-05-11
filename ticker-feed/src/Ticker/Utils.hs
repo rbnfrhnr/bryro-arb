@@ -1,15 +1,19 @@
+{-# LANGUAGE AllowAmbiguousTypes       #-}
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE FlexibleContexts          #-}
 {-# LANGUAGE FlexibleInstances         #-}
+{-# LANGUAGE MultiParamTypeClasses     #-}
 {-# LANGUAGE OverloadedStrings         #-}
+{-# LANGUAGE UndecidableInstances      #-}
 
 module Ticker.Utils
   ( CurrencyExchangeKey
   , DBookMap
   , Destination(..)
+  , PrintTick(..)
   , TickBuffer
-  , TickerST(..)
+  , TickerHandle(..)
   , WriteOutIO
-  , SimpleOut(..)
   , printTickFiltered
   , toCurrencyExchangeKey
   , writeOutIO
@@ -30,8 +34,26 @@ import           Finance
 import           Network.Kafka
 import           Network.Kafka.Producer
 import           System.IO
+import           Utils.Forward
 import           Utils.Influx             as Influx
 import           Utils.Kafka              as Kafka
+
+type CurrencyExchangeKey = String
+
+type DBookMap = Map.Map CurrencyExchangeKey OrderBook
+
+type TickBuffer = Map.Map CurrencyExchangeKey Tick
+
+newtype PrintTick =
+  PrintTick (Maybe CurrencyExchangeKey)
+
+data TickerHandle =
+  TickerHandle
+    { tickerDBookMap     :: !DBookMap
+    , tickerBuffer       :: !TickBuffer
+    , tickerDestinations :: ![Destination Tick]
+    , tickerOrderQueue   :: C.Chan [BaseOrder]
+    }
 
 instance InfluxData Tick where
   toInfluxData (Tick (askPrice, askQty) (bidPrice, bidQty) currency exchange timestamp) =
@@ -51,42 +73,17 @@ instance InfluxData Tick where
 instance KafkaData Tick where
   toKafkaData tick = makeMessage $ BL.toStrict $ encode tick
 
-instance WriteOutIO Kafka.WriteHandle where
+{- | instance for writing a Tick to Kafka. Can now be used with (Destination WriteHandle) -}
+instance WriteOutIO Kafka.WriteHandle Tick where
   writeOutIO wKafka tick = Kafka.writeToKafka wKafka tick >> return wKafka :: IO Kafka.WriteHandle
 
-instance WriteOutIO Influx.InfluxHandle where
+{- | instance for writing a Tick to Influx. Can now be used with (Destination InfluxHandle) -}
+instance WriteOutIO Influx.InfluxHandle Tick where
   writeOutIO influxCon tick = Influx.writeAsync influxCon tick
 
-instance WriteOutIO SimpleOut where
-  writeOutIO simple tick = printTickFiltered (Just "LTCUSDBinance") tick >> hFlush stdout >> return SimpleOut
-
-instance WriteOutIO Destination where
-  writeOutIO (Destination desti) tick = Destination <$> writeOutIO desti tick
-
-instance WriteOutIO [Destination] where
-  writeOutIO destinations tick =
-    foldM (\list (Destination dest) -> fmap (: list) (Destination <$> writeOutIO dest tick)) [] destinations
-
-type CurrencyExchangeKey = String
-
-type DBookMap = Map.Map CurrencyExchangeKey OrderBook
-
-type TickBuffer = Map.Map CurrencyExchangeKey Tick
-
-data SimpleOut =
-  SimpleOut
-
-data Destination =
-  forall a. WriteOutIO a =>
-            Destination a
-
-data TickerST =
-  TickerST
-    { tickerDBookMap     :: !DBookMap
-    , tickerBuffer       :: !TickBuffer
-    , tickerDestinations :: ![Destination]
-    , tickerOrderQueue   :: C.Chan [BaseOrder]
-    }
+{- | Overwriting default print, since Tick is an instance of Show -}
+instance WriteOutIO PrintTick Tick where
+  writeOutIO (PrintTick filter) tick = printTickFiltered filter tick >> hFlush stdout >> return (PrintTick filter)
 
 toCurrencyExchangeKey :: BaseOrder -> String
 toCurrencyExchangeKey order = show (orderCurrencyPair order) ++ show (orderExchange order)
@@ -100,6 +97,3 @@ printTickFiltered (Just currExchangeKey) tick@(Tick ask bid currency exchange ti
 printTick :: Tick -> IO ()
 printTick (Tick ask bid currency exchange timestamp) =
   putStrLn (show exchange ++ " -> " ++ show currency ++ " - " ++ show ask ++ " / " ++ show bid) >> hFlush stdout
-
-class WriteOutIO a where
-  writeOutIO :: a -> Tick -> IO a

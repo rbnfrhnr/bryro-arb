@@ -42,14 +42,17 @@ withConfig (Right cfg) = do
   Binance.subscribeHandler $ decodeAndEnQueueHandler Binance.parseToOrder orderQueue
   influxHandle <- Influx.new cfg :: IO Influx.InfluxHandle
   runTransform
-    (TickerST
+    (TickerHandle
        Map.empty
        Map.empty
-       [Destination SimpleOut, Destination (writeHandle kafkaConfig "bryro-ticker" 0), Destination influxHandle]
+       [ Destination (PrintTick (Just "LTCUSDBinance"))
+       , Destination (writeHandle kafkaConfig "bryro-ticker" 0)
+       , Destination influxHandle
+       ]
        orderQueue)
 
-runTransform :: TickerST -> IO ()
-runTransform tickerST@(TickerST dBookMap tBuffer _ queue) =
+runTransform :: TickerHandle -> IO ()
+runTransform tickerST@(TickerHandle dBookMap tBuffer _ queue) =
   Chan.readChan queue >>= return . foldl handleDepthBook tickerST >>=
   (\tickerST ->
      foldM
@@ -59,8 +62,8 @@ runTransform tickerST@(TickerST dBookMap tBuffer _ queue) =
   runTransform >>
   return ()
 
-handleDepthBook :: TickerST -> BaseOrder -> TickerST
-handleDepthBook tickerST@(TickerST dBookMap _ _ _) order =
+handleDepthBook :: TickerHandle -> BaseOrder -> TickerHandle
+handleDepthBook tickerST@(TickerHandle dBookMap _ _ _) order =
   case Map.lookup dBookMapKey dBookMap of
     Just depthBook -> tickerST {tickerDBookMap = Map.insert dBookMapKey (updateDepthBook depthBook order) dBookMap}
     Nothing -> handleDepthBook tickerST {tickerDBookMap = Map.insert dBookMapKey newOrderBook dBookMap} order
@@ -68,16 +71,16 @@ handleDepthBook tickerST@(TickerST dBookMap _ _ _) order =
     dBookMapKey = toCurrencyExchangeKey order
     newOrderBook = openOrderBook (orderExchange order) (orderCurrencyPair order)
 
-bufferedWrite :: TickerST -> CurrencyExchangeKey -> Maybe Tick -> Maybe OrderBook -> IO TickerST
-bufferedWrite tickerST@(TickerST dbookMap tickBuffer dest queue) key (Just currentTick) (Just book)
+bufferedWrite :: TickerHandle -> CurrencyExchangeKey -> Maybe Tick -> Maybe OrderBook -> IO TickerHandle
+bufferedWrite tickerST@(TickerHandle dbookMap tickBuffer dest queue) key (Just currentTick) (Just book)
   | currentTick /= latestTick =
-    writeOutIO dest latestTick >>= (\uDest -> return (TickerST dbookMap updatedTickBuffer uDest queue))
+    writeOutIO dest latestTick >>= (\uDest -> return (TickerHandle dbookMap updatedTickBuffer uDest queue))
   | otherwise = return tickerST
   where
     latestTick = getTick book
     updatedTickBuffer = Map.insert key latestTick tickBuffer
-bufferedWrite tickerST@(TickerST dbookMap tickBuffer dest queue) key Nothing (Just book) =
-  writeOutIO dest tickPair >>= (\uDest -> return (TickerST dbookMap updatedTickBuffer uDest queue))
+bufferedWrite tickerST@(TickerHandle dbookMap tickBuffer dest queue) key Nothing (Just book) =
+  writeOutIO dest tickPair >>= (\uDest -> return (TickerHandle dbookMap updatedTickBuffer uDest queue))
   where
     tickPair = getTick book
     updatedTickBuffer = Map.insert key tickPair tickBuffer
@@ -85,7 +88,7 @@ bufferedWrite tickerST key lastTick book = return tickerST
 
 decodeOrders :: Either KafkaClientError [BS.ByteString] -> IO [BaseOrder]
 decodeOrders (Right msg) = return (foldl filteredDecode [] msg) :: IO [BaseOrder]
-decodeOrders (Left err) = fail "vla"
+decodeOrders (Left err) = fail (show err)
 
 filteredDecode :: [BaseOrder] -> BS.ByteString -> [BaseOrder]
 filteredDecode orders bsMessage =
