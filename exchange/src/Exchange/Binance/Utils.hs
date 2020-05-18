@@ -35,4 +35,4 @@ subscribeReadonly withMessage = subscribeHandler (\_ msg -> withMessage msg)
 
 {- | Websocket worker which allows to interact with the exchange -}
 subscribeHandler :: Socket.WebsocketHandler -> IO ()
-subscribeHandler handler = Socket.runSecureClient websocketHost ("/ws/" ++ channels) 9443 handler (\x -> return ())
+subscribeHandler handler = Socket.new websocketHost ("/ws/" ++ channels) 9443 handler (\x -> return ()) >>= Socket.run

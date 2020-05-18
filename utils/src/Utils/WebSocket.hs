@@ -1,5 +1,6 @@
 module Utils.WebSocket
-  ( runSecureClient
+  ( new
+  , run
   , Host
   , WebsocketHandler
   , OnConnect
@@ -27,24 +28,46 @@ type WebsocketHandler = W.Connection -> BL.ByteString -> IO ()
 
 type OnConnect = (W.Connection -> IO ())
 
-{- endpoint, port, queue, function applied at con open -}
-runSecureClient :: Host -> Path -> PortNumber -> WebsocketHandler -> OnConnect -> IO ()
-runSecureClient host path port onMessage onOpen = do
+data WebsocketHandle =
+  WebsocketHandle
+    { wsHost       :: Host
+    , wsPath       :: Path
+    , wsPort       :: PortNumber
+    , wsHandler    :: WebsocketHandler
+    , wsOnConnect  :: OnConnect
+    , wsConnection :: W.Connection
+    }
+
+new :: Host -> Path -> PortNumber -> WebsocketHandler -> OnConnect -> IO WebsocketHandle
+new host path port onMessage onOpen = WebsocketHandle host path port onMessage onOpen <$> connectSocket host path port
+
+run :: WebsocketHandle -> IO ()
+run handle@(WebsocketHandle host path port onMessage onOpen connection) =
+  forkIO (onOpen connection >> worker handle) >> return ()
+
+connectSocket :: Host -> Path -> PortNumber -> IO W.Connection
+connectSocket host path port = do
   context <- C.initConnectionContext
   connection <- C.connectTo context (connectionParams host port)
   stream <- Stream.makeStream (reader connection) (writer connection)
-  newCon <- WS.newClientConnection stream host path connectionOptions []
-  _ <- onOpen newCon
-  forkIO $ worker newCon onMessage
-  return ()
+  WS.newClientConnection stream host path connectionOptions []
 
-worker :: W.Connection -> WebsocketHandler -> IO ()
-worker connection onMessage = do
+worker :: WebsocketHandle -> IO ()
+worker handle = do
   result <- E.try (WS.receiveDataMessage connection) :: IO (Either W.ConnectionException W.DataMessage)
   case result of
-    Left ex -> print ("Exception in Websocket connection " ++ show ex) >> hFlush stdout >> worker connection onMessage
-    Right (W.Binary val) -> onMessage connection val >> worker connection onMessage
-    Right (W.Text val1 val2) -> onMessage connection val1 >> worker connection onMessage
+    Left ex ->
+      print ("Exception in Websocket connection " ++ show ex) >> reconnect >>=
+      (\con -> onOpen con >> return con) >>=
+      (\con -> print "Reconnected to WebSocket" >> hFlush stdout >> return con) >>=
+      (\con -> worker (handle {wsConnection = con}))
+    Right (W.Binary val) -> onMessage connection val >> worker handle
+    Right (W.Text val1 val2) -> onMessage connection val1 >> worker handle
+  where
+    reconnect = connectSocket (wsHost handle) (wsPath handle) (wsPort handle)
+    connection = wsConnection handle
+    onMessage = wsHandler handle
+    onOpen = wsOnConnect handle
 
 {- connection config -}
 connectionParams :: String -> PortNumber -> C.ConnectionParams
