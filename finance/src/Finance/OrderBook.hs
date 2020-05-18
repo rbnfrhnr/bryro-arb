@@ -19,6 +19,10 @@ import           Finance.Order
 import           Finance.OrderBook.Internal
 import           Finance.Tick
 
+{- $setup
+  >>> :set -XDataKinds
+  >>> import Data.Map as Map
+-}
 {- | This function updates a given DepthBook by the order provided
      If the order is already in the book. the order gets replaced/updated
      If the order is not yet in the book, it will be added.
@@ -68,6 +72,44 @@ openOrderBook exchange currencyPair = OrderBook currencyPair exchange Map.empty 
 toOrderKey :: BaseOrder -> OrderKey
 toOrderKey order = OrderKey (orderCurrentPrice order)
 
+{- |
+  >>> mbAsk = toAskOrder (BaseOrder Bitstamp LTCUSD 10.25 1.42 150 Ask) :: Maybe (Order AskOrder)
+  >>> mbBid = toBidOrder (BaseOrder Bitstamp LTCUSD 10.2 3.0 152 Bid) :: Maybe (Order BidOrder)
+
+  Testing empty book
+
+  >>> let emptyAsks = Map.fromList []
+  >>> let emptyBids = Map.fromList []
+  >>> let emptyBook = OrderBook LTCUSD Bitstamp emptyAsks emptyBids
+  >>> (Tick (0.0, 0.0) (0.0, 0.0) LTCUSD Bitstamp 0) == getTick emptyBook
+  True
+
+  Test that the tick sets default values for non present orders
+
+  >>> :{
+   case mbAsk of
+    (Just ask) -> do
+      let asks = Map.fromList [(toOrderKey (unAskOrder ask), ask)]
+      let bids = Map.fromList []
+      let book = OrderBook LTCUSD Bitstamp asks bids
+      (Tick (10.25,1.42) (0.0, 0.0) LTCUSD Bitstamp 150) == getTick book
+  :}
+  True
+
+  test that the tick is correctly created when both orders are present
+  and the timestamp refers to the latest (higher value)
+
+  >>> :{
+   case (mbAsk, mbBid) of
+     (Just ask, Just bid) -> do
+       let asks = Map.fromList [(toOrderKey (unAskOrder ask), ask)]
+       let bids = Map.fromList [(toOrderKey (unBidOrder bid), bid)]
+       let book = OrderBook LTCUSD Bitstamp asks bids
+       (Tick (10.25,1.42) (10.2, 3.0) LTCUSD Bitstamp 152) == getTick book
+  :}
+  True
+
+-}
 getTick :: OrderBook -> Tick
 getTick (OrderBook currency exchange asks bids) = Tick askTick bidTick currency exchange timestamp
   where

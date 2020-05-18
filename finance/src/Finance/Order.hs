@@ -66,6 +66,11 @@ instance ToJSON BaseOrder
 
 instance FromJSON BaseOrder
 
+instance Eq OrderType where
+  (==) Ask Ask = True
+  (==) Bid Bid = True
+  (==) _ _     = False
+
 toBidOrder :: BaseOrder -> Maybe (Order BidOrder)
 toBidOrder order@(BaseOrder _ _ _ _ _ Bid) = Just (Order order)
 toBidOrder _                               = Nothing
