@@ -35,7 +35,8 @@ dependencies:
   - text >=1.2.3.1
   - time >=1.8.0.2
   - transformers >=0.5.6.2
-  - websockets >=0.12.5.3
+  - websockets >=0.12.7.1
+  - wuss >=1.1.16
 
 library:
   source-dirs: src

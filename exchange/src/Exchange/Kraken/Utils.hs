@@ -34,7 +34,7 @@ subscribeReadonly :: (BL.ByteString -> IO ()) -> IO ()
 subscribeReadonly withMessage = subscribeHandler (\_ msg -> withMessage msg)
 
 subscribeHandler :: Socket.WebsocketHandler -> IO ()
-subscribeHandler handler = Socket.new websocketHost "/" 443 handler subscribe >>= Socket.run
+subscribeHandler handler = Socket.new websocketHost "/" 443 handler subscribe
 
 subscribe :: Connection -> IO ()
 subscribe connection = sendTextData connection msg
