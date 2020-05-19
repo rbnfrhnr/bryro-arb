@@ -47,7 +47,8 @@ withConfig (Right cfg) = do
        Map.empty
        [Destination (writeHandle kafkaConfig "bryro-ticker" 0), Destination influxHandle]
        orderQueue)
-
+{- read from the order queue, update the order books and finally extract the ticks and send them to influx/kafka/stdout if necessary
+-}
 runTransform :: TickerHandle -> IO ()
 runTransform tickerST@(TickerHandle dBookMap tBuffer _ queue) =
   Chan.readChan queue >>= return . foldl handleDepthBook tickerST >>=
@@ -59,6 +60,9 @@ runTransform tickerST@(TickerHandle dBookMap tBuffer _ queue) =
   runTransform >>
   return ()
 
+{- If there already is an orderBook for the currency and exchange referred by to by the order, it will update the orderbook
+   If there there isn't an orderBook for the currency/exchange, it will create a new book, insert the order and add it to the handle
+-}
 handleDepthBook :: TickerHandle -> BaseOrder -> TickerHandle
 handleDepthBook tickerST@(TickerHandle dBookMap _ _ _) order =
   case Map.lookup dBookMapKey dBookMap of
@@ -67,7 +71,14 @@ handleDepthBook tickerST@(TickerHandle dBookMap _ _ _) order =
   where
     dBookMapKey = toCurrencyExchangeKey order
     newOrderBook = openOrderBook (orderExchange order) (orderCurrencyPair order)
+    
+{- | checks whether the tick extracted from the orderBook differs from the last one that got sent. In case they differ, the new tick
+     will be written to kafka, influx etc. 
+     
+     First match handles the case whene there already is a tick present in the buffer. 
+     Second match handles the case when there is not tick present in the buffer (e.g first time extracting tick from orderBook)
 
+-}
 bufferedWrite :: TickerHandle -> CurrencyExchangeKey -> Maybe Tick -> Maybe OrderBook -> IO TickerHandle
 bufferedWrite tickerST@(TickerHandle dbookMap tickBuffer dest queue) key (Just currentTick) (Just book)
   | currentTick /= latestTick =
