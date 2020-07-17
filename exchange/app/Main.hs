@@ -14,7 +14,7 @@ import           System.IO
 main :: IO ()
 main = do
   orderQueue <- newChan
-  putStrLn "Starting to subscribe to depthbooks" >> hFlush stdout
+  putStrLn "Starting to subscribe to orderBooks" >> hFlush stdout
   Bitstamp.subscribeHandler $ decodeAndEnQueueHandler Bitstamp.parseToOrder orderQueue
   Kraken.subscribeHandler $ decodeAndEnQueueHandler Kraken.parseToOrder orderQueue
   Binance.subscribeHandler $ decodeAndEnQueueHandler Binance.parseToOrder orderQueue

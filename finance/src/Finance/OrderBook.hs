@@ -8,7 +8,7 @@ module Finance.OrderBook
   , getLowerAsks
   , getTick
   , openOrderBook
-  , updateDepthBook
+  , updateOrderBook
   ) where
 
 import qualified Data.Map                   as Map
@@ -19,7 +19,7 @@ import           Finance.Order
 import           Finance.OrderBook.Internal
 import           Finance.Tick
 
-{- | This function updates a given DepthBook by the order provided
+{- | This function updates a given orderBook by the order provided
      If the order is already in the book. the order gets replaced/updated
      If the order is not yet in the book, it will be added.
      If the order is in the book but the quantity of the order is zero, we delete it.
@@ -27,8 +27,8 @@ import           Finance.Tick
      The function works for Bid Orders as well as for Ask Orders
 
 -}
-updateDepthBook :: OrderBook -> BaseOrder -> OrderBook
-updateDepthBook book order
+updateOrderBook :: OrderBook -> BaseOrder -> OrderBook
+updateOrderBook book order
   | (Just order) <- maybeAskOrder = updateAskOrderBook book order
   | (Just order) <- maybeBidOrder = updateBidOrderBook book order
   where
@@ -53,15 +53,15 @@ updateAskOrderBook (OrderBook currency exchange askBook bidBook) askOrder
     orderKey = toOrderKey order
     qty = orderQuantity order
 
-{- | This function returns all the Ask prices which are lower than the provided Bid price for a given DepthBook -}
+{- | This function returns all the Ask prices which are lower than the provided Bid price for a given orderBook -}
 getLowerAsks :: Order BidOrder -> OrderBook -> [Order AskOrder]
 getLowerAsks order (OrderBook _ _ askBook _) = (Map.elems . fst) (Map.split (toOrderKey (unBidOrder order)) askBook)
 
-{- | This function returns all the Bid prices which are higher than the provided asking price for a given DepthBook -}
+{- | This function returns all the Bid prices which are higher than the provided asking price for a given orderBook -}
 getHigherBids :: Order AskOrder -> OrderBook -> [Order BidOrder]
 getHigherBids order (OrderBook _ _ _ bidBook) = (Map.elems . snd) (Map.split (toOrderKey (unAskOrder order)) bidBook)
 
-{- | Constructor function for a Depthbook -}
+{- | Constructor function for a orderBook -}
 openOrderBook :: Exchange -> CurrencyPair -> OrderBook
 openOrderBook exchange currencyPair = OrderBook currencyPair exchange Map.empty Map.empty
 

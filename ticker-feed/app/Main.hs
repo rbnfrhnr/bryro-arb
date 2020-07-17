@@ -52,7 +52,7 @@ withConfig (Right cfg) = do
 -}
 runTransform :: TickerHandle -> IO ()
 runTransform tickerST@(TickerHandle dBookMap tBuffer _ queue) =
-  Chan.readChan queue >>= return . foldl handleDepthBook tickerST >>=
+  Chan.readChan queue >>= return . foldl handleOrderBook tickerST >>=
   (\tickerST ->
      foldM
        (\tst key -> bufferedWrite tst key (Map.lookup key (tickerBuffer tst)) (Map.lookup key (tickerDBookMap tickerST)))
@@ -65,11 +65,11 @@ runTransform tickerST@(TickerHandle dBookMap tBuffer _ queue) =
      it will update the order book. If there there isn't an orderBook for the currency/exchange,
      it will create a new book, insert the order and add it to the handle
 -}
-handleDepthBook :: TickerHandle -> BaseOrder -> TickerHandle
-handleDepthBook tickerST@(TickerHandle dBookMap _ _ _) order =
+handleOrderBook :: TickerHandle -> BaseOrder -> TickerHandle
+handleOrderBook tickerST@(TickerHandle dBookMap _ _ _) order =
   case Map.lookup dBookMapKey dBookMap of
-    Just depthBook -> tickerST {tickerDBookMap = Map.insert dBookMapKey (updateDepthBook depthBook order) dBookMap}
-    Nothing -> handleDepthBook tickerST {tickerDBookMap = Map.insert dBookMapKey newOrderBook dBookMap} order
+    Just orderBook -> tickerST {tickerDBookMap = Map.insert dBookMapKey (updateOrderBook orderBook order) dBookMap}
+    Nothing -> handleOrderBook tickerST {tickerDBookMap = Map.insert dBookMapKey newOrderBook dBookMap} order
   where
     dBookMapKey = toCurrencyExchangeKey order
     newOrderBook = openOrderBook (orderExchange order) (orderCurrencyPair order)
@@ -83,12 +83,12 @@ handleDepthBook tickerST@(TickerHandle dBookMap _ _ _) order =
 -}
 bufferedWrite :: TickerHandle -> CurrencyExchangeKey -> Maybe Tick -> Maybe OrderBook -> IO TickerHandle
 bufferedWrite tickerST@(TickerHandle dbookMap tickBuffer dest queue) key (Just currentTick) (Just book)
-  | currentTick /= latestTick =
-    writeOutIO dest latestTick >>= (\uDest -> return (TickerHandle dbookMap updatedTickBuffer uDest queue))
+  | currentTick /= latestTick = fmap tickerHandle' (writeOutIO dest latestTick)
   | otherwise = return tickerST
   where
     latestTick = getTick book
     updatedTickBuffer = Map.insert key latestTick tickBuffer
+    tickerHandle' dest = TickerHandle dbookMap updatedTickBuffer dest queue
 bufferedWrite tickerST@(TickerHandle dbookMap tickBuffer dest queue) key Nothing (Just book) =
   writeOutIO dest tickPair >>= (\uDest -> return (TickerHandle dbookMap updatedTickBuffer uDest queue))
   where

@@ -17,7 +17,7 @@ import           Finance.Order
 -}
 data OrderBook =
   OrderBook
-    { orderBookCurrencyPair :: !CurrencyPair -- ^ Identifier for this Depthbook. (LTCUSD, XRPUSD etc)
+    { orderBookCurrencyPair :: !CurrencyPair -- ^ Identifier for this orderBook. (LTCUSD, XRPUSD etc)
     , orderBookExchange     :: Exchange
     , orderBookAsk          :: Map OrderKey (Order AskOrder) -- ^ Collection of asking prices for this CurrencyPair
     , orderBookBid          :: Map OrderKey (Order BidOrder) -- ^ Collection of biding prices fot this CurrencyPair
@@ -34,5 +34,5 @@ instance Eq OrderKey where
 instance Ord OrderKey where
   compare (OrderKey price1) (OrderKey price2) = compare price1 price2
 
--- | A collection of various DepthBooks. Identified by their CurrencyPair
+-- | A collection of various orderBooks. Identified by their CurrencyPair
 type OrderBookCollection = Map CurrencyPair OrderBook
