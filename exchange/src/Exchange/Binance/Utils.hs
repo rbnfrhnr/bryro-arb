@@ -1,18 +1,27 @@
-module Exchange.Binance.Utils (
-       subscribeToDepthBook
-      ,subscribeToFees
-) where
+module Exchange.Binance.Utils
+  ( parseBinanceMessage
+  , parseToOrder
+  , subscribeHandler
+  , subscribeReadonly
+  ) where
 
-import qualified Control.Concurrent.MVar as MVar
-import qualified Control.Concurrent.Chan as C
-import qualified Exchange.Network.Socket as Socket
-import qualified Data.Aeson as Aeson
-import qualified Exchange.Binance.Secured as BinanceSecured
-import Control.Concurrent
-import Exchange.Binance.Decoder
-import Exchange.Binance.Types
-import Exchange.Types
-import Finance.Types
+import qualified Control.Concurrent.Chan             as C
+import qualified Control.Concurrent.MVar             as MVar
+import qualified Data.Aeson                          as Aeson
+import qualified Data.ByteString.Lazy                as BL
+import qualified Utils.WebSocket                     as Socket
+
+import           Control.Concurrent
+import           Exchange.Binance.Contract.Websocket
+import           Exchange.Types
+import           Exchange.Utils
+import           Finance
+
+parseToOrder :: (BL.ByteString -> Either String [BaseOrder])
+parseToOrder = fmap toOrder . parseBinanceMessage
+
+parseBinanceMessage :: (BL.ByteString -> Either String BinanceMessage)
+parseBinanceMessage = Aeson.eitherDecode
 
 websocketHost :: String
 websocketHost = "stream.binance.com"
@@ -20,19 +29,10 @@ websocketHost = "stream.binance.com"
 channels :: String
 channels = "ltcusdt@depth@100ms/xrpusdt@depth@100ms/ethusdt@depth@100ms/bchusdt@depth@100ms"
 
-{- | Websocket worker which receives the order-book updates-}
-subscribeToDepthBook :: C.Chan [Order] -> IO ()
-subscribeToDepthBook queue = Socket.runSecureClient websocketHost ("/ws/" ++ channels) 9443 (\byteStringMsg -> C.writeChan queue $ toOrder (Aeson.decode byteStringMsg :: Maybe BinanceMessage)) (\x-> return ())
+{- | Websocket worker which receives the order-book updates. readonly and no way to interfere with the connection -}
+subscribeReadonly :: (BL.ByteString -> IO ()) -> IO ()
+subscribeReadonly withMessage = subscribeHandler (\_ msg -> withMessage msg)
 
-{- | Small worker which fetches the current applicable fees in a given interval -}
-subscribeToFees :: MVar.MVar BinanceFeeTable -> IO ()
-subscribeToFees feeTableHolder =  do
-                                  forkIO $ workerLoop
-                                  return ()
-                where workerLoop = do
-                                   maybeFeeTable <- BinanceSecured.getBinanceFee
-                                   putStrLn "updated fees for Binance"
-                                   case maybeFeeTable of
-                                                 Just feeTable -> MVar.putMVar feeTableHolder feeTable
-                                   threadDelay 60000000
-                                   workerLoop
+{- | Websocket worker which allows to interact with the exchange -}
+subscribeHandler :: Socket.WebsocketHandler -> IO ()
+subscribeHandler handler = Socket.new websocketHost ("/ws/" ++ channels) 9443 handler (\x -> return ())

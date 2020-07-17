@@ -1,45 +1,24 @@
 module Main where
 
 import qualified Control.Concurrent.MVar as MVar
-import Finance.Types
-import Exchange.Binance.Types
-import Exchange.Bitstamp.Types
-import Exchange.Bitstamp.Utils as Bitstamp
-import Exchange.Binance.Utils as Binance
-import Exchange.Kraken.Utils as Kraken
-import Control.Concurrent.Chan as Chan
-import Control.Concurrent
 
-data FeeTable = BitstampFeeTable | BinanceFeeTable deriving Show
+import           Control.Concurrent
+import           Control.Concurrent.Chan as Chan
+import           Exchange.Binance.Utils  as Binance
+import           Exchange.Bitstamp.Utils as Bitstamp
+import           Exchange.Handler
+import           Exchange.Kraken.Utils   as Kraken
+import           Exchange.Utils
+import           System.IO
 
 main :: IO ()
 main = do
-       bitstampFees <- newEmptyMVar
-       binanceFees <- newEmptyMVar
-       Bitstamp.subscribeToFees bitstampFees
-       Binance.subscribeToFees binanceFees
+  orderQueue <- newChan
+  putStrLn "Starting to subscribe to depthbooks" >> hFlush stdout
+  Bitstamp.subscribeHandler $ decodeAndEnQueueHandler Bitstamp.parseToOrder orderQueue
+  Kraken.subscribeHandler $ decodeAndEnQueueHandler Kraken.parseToOrder orderQueue
+  Binance.subscribeHandler $ decodeAndEnQueueHandler Binance.parseToOrder orderQueue
+  worker orderQueue
 
-       orderQueue <- newChan
-       Bitstamp.subscribeToDepthBook orderQueue
-       Binance.subscribeToDepthBook orderQueue
-       Kraken.subscribeToDepthBook orderQueue
-
-       forkIO  $ worker orderQueue
-       forkIO $ feesWorker bitstampFees
-       feesWorker binanceFees
-       return ()
-
-feesWorker :: (Show a, Fee a) => MVar.MVar a -> IO ()
-feesWorker feesHolder = loop
-          where loop = do
-                       fees <- MVar.readMVar feesHolder
-                       putStrLn $ show fees
-                       threadDelay 5000000
-                       loop
-
-worker :: Chan [Order] -> IO ()
-worker queue = loop
-          where loop = do
-                        orders <- Chan.readChan queue
---                        putStrLn $ show orders
-                        loop
+worker :: (Show a) => Chan a -> IO ()
+worker queue = Chan.readChan queue >>= print >> hFlush stdout >> worker queue

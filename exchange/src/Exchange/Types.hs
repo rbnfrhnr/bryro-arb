@@ -1,8 +1,8 @@
-module Exchange.Types (
-       ExchangeOrder(..)
-) where
+module Exchange.Types
+  ( ExchangeOrder(..)
+  ) where
 
-import Finance.Types
+import           Finance
 
 class ExchangeOrder a where
-  toOrder :: a -> [Order]
+  toOrder :: a -> [BaseOrder]

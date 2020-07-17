@@ -1,0 +1,6 @@
+/.idea/
+**/.idea/libraries/
+/**/.idea/
+/**/out/
+/.out
+/.stack-work

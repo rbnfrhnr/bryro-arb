@@ -15,14 +15,18 @@ before_install:
   - export PATH=$HOME/.local/bin:$PATH
   - travis_retry curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar
     xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+  - mv -f ./config.yaml $HOME/.stack/config.yaml
   - mkdir -p ~/artifacts
+  - wget -q https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/6.2.2/flyway-commandline-6.2.2-linux-x64.tar.gz
+  - mv ./flyway-commandline-6.2.2-linux-x64.tar.gz ~/artifacts/flyway.tar.gz
 stages:
-  - Build
-  - Deploy
+  - Database
+  - Build Order Feed
+  - Build Ticker Feed
 jobs:
   include:
-    - stage: Build Prod
-      name: Price Feed
+    - stage: Build Order Feed
+      name: Prod Build
       language: generic
       cache:
         directories:
@@ -49,7 +53,7 @@ jobs:
           - scp ~/artifacts/price-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents
             && scp ~/artifacts/order-feed.service $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents
       if: branch = master
-    - name: Price Feed Staging
+    - name: Staging Build
       language: generic
       if: branch = staging
       cache:
@@ -68,10 +72,47 @@ jobs:
         - stack build
         - mv $TRAVIS_BUILD_DIR/price-feed/.stack-work/dist/x86_64-linux/Cabal-2.4.0.1/build/price-feed-exe/price-feed-exe
           ~/artifacts/price-feed-exe
+        - mv ./order-feed.service ~/artifacts/order-feed.service
         - cd ..
       deploy:
         provider: script
         skip_cleanup: true
         script:
-          - scp -p 23 ~/artifacts/price-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents
-            && scp -p 23 ~/artifacts/order-feed.service $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents
+          - ssh -p 23 $DEPLOY_USER@$DEPLOY_HOST "sudo /bin/systemctl stop order-feed"
+            && scp -P 23 ~/artifacts/price-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/order-feed
+            && scp -P 23 ~/artifacts/order-feed.service $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/order-feed
+            && ssh -p 23 $DEPLOY_USER@$DEPLOY_HOST "sudo /bin/systemctl start order-feed"
+        on:
+          branch: staging
+    - stage: Build Ticker Feed
+      name: Staging Build
+      language: generic
+      if: branch = staging
+      cache:
+        directories:
+          - "$HOME/.stack"
+      addons:
+        apt:
+          packages:
+            - libgmp-dev
+      install:
+        - cd ./ticker-feed
+        - stack --no-terminal --install-ghc test --only-dependencies
+        - cd ..
+      script:
+        - cd ./ticker-feed
+        - stack build
+        - mv $TRAVIS_BUILD_DIR/ticker-feed/.stack-work/dist/x86_64-linux/Cabal-2.4.0.1/build/ticker-feed-exe/ticker-feed-exe
+          ~/artifacts/ticker-feed-exe
+        - mv ./ticker-feed.service ~/artifacts/ticker-feed.service
+        - cd ..
+      deploy:
+        provider: script
+        skip_cleanup: true
+        script:
+          - ssh -p 23 $DEPLOY_USER@$DEPLOY_HOST "sudo /bin/systemctl stop ticker-feed"
+            && scp -P 23 ~/artifacts/ticker-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/ticker-feed
+            && scp -P 23 ~/artifacts/ticker-feed.service $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/ticker-feed
+            && ssh -p 23 $DEPLOY_USER@$DEPLOY_HOST "sudo /bin/systemctl start ticker-feed"
+        on:
+          branch: staging
