@@ -5,7 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/bryro-arb.iml" filepath="$PROJECT_DIR$/.idea/bryro-arb.iml" />
       <module fileurl="file://$PROJECT_DIR$/exchange/exchange.iml" filepath="$PROJECT_DIR$/exchange/exchange.iml" />
       <module fileurl="file://$PROJECT_DIR$/finance/finance.iml" filepath="$PROJECT_DIR$/finance/finance.iml" />
-      <module fileurl="file://$PROJECT_DIR$/price-feed/price-feed.iml" filepath="$PROJECT_DIR$/price-feed/price-feed.iml" />
+      <module fileurl="file://$PROJECT_DIR$/order-feed/order-feed.iml" filepath="$PROJECT_DIR$/order-feed/order-feed.iml" />
       <module fileurl="file://$PROJECT_DIR$/ticker-feed/ticker-feed.iml" filepath="$PROJECT_DIR$/ticker-feed/ticker-feed.iml" />
       <module fileurl="file://$PROJECT_DIR$/utils/utils.iml" filepath="$PROJECT_DIR$/utils/utils.iml" />
     </modules>

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c10a0bbbd9e53084bff97bc4a90e46da22ea021a7dfb468d827d684d13691a0f
+-- hash: 495ee684c863e3901542a3b841ecfec8f2ca1c57e3805959bbbcd809f78fcac2
 
 name:           utils
 version:        0.1.0.0
@@ -27,8 +27,12 @@ source-repository head
 
 library
   exposed-modules:
+      Utils.Forward
       Utils.Influx
+      Utils.Influx.Internal
       Utils.Kafka
+      Utils.Kafka.Internal
+      Utils.WebSocket
   other-modules:
       Paths_utils
   hs-source-dirs:
@@ -38,15 +42,19 @@ library
     , bytestring ==0.10.8.2
     , bytestring-show >=0.3.5.6
     , configurator >=0.3.0.0
+    , connection ==0.3.1
     , containers >=0.6.0.1
     , directory >=1.3.3.0
     , filepath >=1.4.2.1
     , influxdb >=1.7.1.1
     , lens >=4.17.1
     , milena >=0.5.4.0
+    , network >=2.8.0.1
     , text >=1.2.3.1
     , time >=1.8.0.2
     , transformers >=0.5.6.2
+    , websockets >=0.12.7.1
+    , wuss >=1.1.16
   default-language: Haskell2010
 
 executable utils-exe
@@ -61,16 +69,20 @@ executable utils-exe
     , bytestring ==0.10.8.2
     , bytestring-show >=0.3.5.6
     , configurator >=0.3.0.0
+    , connection ==0.3.1
     , containers >=0.6.0.1
     , directory >=1.3.3.0
     , filepath >=1.4.2.1
     , influxdb >=1.7.1.1
     , lens >=4.17.1
     , milena >=0.5.4.0
+    , network >=2.8.0.1
     , text >=1.2.3.1
     , time >=1.8.0.2
     , transformers >=0.5.6.2
     , utils
+    , websockets >=0.12.7.1
+    , wuss >=1.1.16
   default-language: Haskell2010
 
 test-suite utils-test
@@ -86,14 +98,18 @@ test-suite utils-test
     , bytestring ==0.10.8.2
     , bytestring-show >=0.3.5.6
     , configurator >=0.3.0.0
+    , connection ==0.3.1
     , containers >=0.6.0.1
     , directory >=1.3.3.0
     , filepath >=1.4.2.1
     , influxdb >=1.7.1.1
     , lens >=4.17.1
     , milena >=0.5.4.0
+    , network >=2.8.0.1
     , text >=1.2.3.1
     , time >=1.8.0.2
     , transformers >=0.5.6.2
     , utils
+    , websockets >=0.12.7.1
+    , wuss >=1.1.16
   default-language: Haskell2010

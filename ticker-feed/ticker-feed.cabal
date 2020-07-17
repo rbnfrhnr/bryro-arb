@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 042592c72402854b94c13e285430ad4255d10d9974153a613b41d124c06599fc
+-- hash: ce283f0f8b169076f1684188be1149c8e8b24125fed1755d291d476523e4cc4f
 
 name:           ticker-feed
 version:        0.1.0.0
@@ -27,7 +27,7 @@ source-repository head
 
 library
   exposed-modules:
-      Lib
+      Ticker.Utils
   other-modules:
       Paths_ticker_feed
   hs-source-dirs:
