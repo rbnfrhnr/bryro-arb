@@ -47,15 +47,12 @@ data OrderFeedHandle =
     , destinations :: [Destination [BaseOrder]]
     }
 
-configFile :: IO (Either SomeException Config)
-configFile = try $ load [Required $ "order-feed" </> "resources" </> "config.cfg"]
-
 main :: IO ()
 main = do
-  mb <- configFile
-  case mb of
-    Left (err :: SomeException) -> print err
-    Right cfg                   -> Main.init cfg >>= run
+  mb <- configFile :: IO (Either SomeException Config)
+  either print (Main.init >=> run) mb
+  where
+    configFile = try $ load [Required $ "resources" </> "config.cfg"]
 
 init :: Config -> IO OrderFeedHandle
 init cfg = do
