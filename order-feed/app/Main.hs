@@ -40,11 +40,9 @@ data OrderFeedHandle =
     }
 
 main :: IO ()
-main = do
-  mb <- configFile :: IO (Either SomeException Config)
-  either print (Main.init >=> run) mb
+main = configFile >>= either print (Main.init >=> run)
   where
-    configFile = try $ load [Required $ "resources" </> "config.cfg"]
+    configFile = try $ load [Required $ "resources" </> "config.cfg"] :: IO (Either SomeException Config)
 
 init :: Config -> IO OrderFeedHandle
 init cfg = do
