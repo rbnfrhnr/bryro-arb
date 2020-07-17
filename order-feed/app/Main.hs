@@ -5,21 +5,16 @@
 
 module Main where
 
+import qualified Control.Concurrent.Chan  as Chan
 import qualified Data.Aeson               as Aeson
 import qualified Data.ByteString.Lazy     as BL
 import qualified Data.Map                 as Map
 import qualified Database.InfluxDB.Format as F
 
-import           Prelude                  hiding (lookup)
-
-import           Control.Concurrent
-import           Control.Concurrent.Chan  as Chan
 import           Control.Exception
 import           Control.Monad
-import           Data.ByteString
 import           Data.Configurator
 import           Data.Configurator.Types
-import           Data.Text
 import           Data.Time
 import           Data.Time.Clock
 import           Data.Time.Clock.POSIX
@@ -31,9 +26,6 @@ import           Exchange.Kraken.Utils    as Kraken
 import           Finance
 import           Network.Kafka
 import           Network.Kafka.Producer
-import           Network.Kafka.Protocol
-import           System.Directory
-import           System.Environment
 import           System.FilePath
 import           System.IO
 import           Utils.Forward            (Destination (..), SimpleOut (..),
@@ -43,7 +35,7 @@ import           Utils.Kafka              as Kafka
 
 data OrderFeedHandle =
   OrderFeedHandle
-    { queue        :: Chan [BaseOrder]
+    { queue        :: Chan.Chan [BaseOrder]
     , destinations :: [Destination [BaseOrder]]
     }
 
@@ -56,7 +48,7 @@ main = do
 
 init :: Config -> IO OrderFeedHandle
 init cfg = do
-  orderQueue <- newChan
+  orderQueue <- Chan.newChan
   Bitstamp.subscribeHandler $ decodeAndEnQueueHandler Bitstamp.parseToOrder orderQueue
   Kraken.subscribeHandler $ decodeAndEnQueueHandler Kraken.parseToOrder orderQueue
   Binance.subscribeHandler $ decodeAndEnQueueHandler Binance.parseToOrder orderQueue
