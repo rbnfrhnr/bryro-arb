@@ -26,17 +26,8 @@ runSecureClient host path port onMessage onOpen = do
     forkIO $ worker newCon onMessage
     return ()
 
-
-
 worker :: W.Connection -> (B.ByteString -> IO ()) -> IO ()
-worker connection onMessage = loop
-                    where loop = do
-                                   msg <- WS.receiveData connection
-                                   onMessage (msg :: B.ByteString)
-                                   loop
-
-
-
+worker connection onMessage = WS.receiveData connection >>= onMessage >> worker connection onMessage
 
 {- connection config -}
 connectionParams :: String -> S.PortNumber -> C.ConnectionParams
@@ -62,7 +53,3 @@ writer connection = maybe (return ()) (C.connectionPut connection . BL.toStrict)
 
 connectionOptions :: WS.ConnectionOptions
 connectionOptions = WS.defaultConnectionOptions
-
-unpackMsg :: Maybe BS.ByteString -> BS.ByteString
-unpackMsg Nothing = error "couldn't parse msg"
-unpackMsg (Just x) = x
