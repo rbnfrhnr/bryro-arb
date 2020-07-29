@@ -4,6 +4,8 @@ module Finance.OrderBook.Internal
   ( OrderBook(..)
   , OrderKey(..)
   , OrderBookCollection(..)
+  , OrderBookGroup(..)
+  , OrderBookKey(..)
   ) where
 
 import           Data.Map
@@ -36,3 +38,17 @@ instance Ord OrderKey where
 
 -- | A collection of various orderBooks. Identified by their CurrencyPair
 type OrderBookCollection = Map CurrencyPair OrderBook
+
+data OrderBookKey =
+  OrderBookKey Exchange CurrencyPair
+
+newtype OrderBookGroup =
+  OrderBookGroup (Map OrderBookKey OrderBook)
+
+instance Eq OrderBookKey where
+  (==) (OrderBookKey exch1 curr1) (OrderBookKey exch2 curr2) = exch1 == exch2 && curr1 == curr2
+
+instance Ord OrderBookKey where
+  compare (OrderBookKey exch1 curr1) (OrderBookKey exch2 curr2)
+    | exch1 == exch2 = compare curr1 curr2
+    | otherwise = compare exch1 exch2
