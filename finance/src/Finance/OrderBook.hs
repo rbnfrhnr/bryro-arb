@@ -5,11 +5,14 @@ module Finance.OrderBook
   , OrderBookCollection(..)
   , OrderBookGroup(..)
   , OrderKey(..)
+  , OrderBookKey(..)
   , getHigherBids
   , getLowerAsks
+  , getOrderBookKey
   , getTick
   , openGroup
   , openOrderBook
+  , unOrderBookGroup
   , updateOrderBook
   , updateOrderBookGroup
   ) where
@@ -98,6 +101,9 @@ timestampOrDefault (Just askOrder) (Just bidOrder)
 createOrderBookKey :: BaseOrder -> OrderBookKey
 createOrderBookKey order = OrderBookKey (orderExchange order) (orderCurrencyPair order)
 
+getOrderBookKey :: OrderBook -> OrderBookKey
+getOrderBookKey orderBook = OrderBookKey (orderBookExchange orderBook) (orderBookCurrencyPair orderBook)
+
 openGroup :: OrderBookGroup
 openGroup = OrderBookGroup Map.empty
 
@@ -120,3 +126,10 @@ updateOrderBookGroup (OrderBookGroup orderBooks) order
   where
     orderBookKey = createOrderBookKey order
     newOrderBook = openOrderBook (orderExchange order) (orderCurrencyPair order)
+
+withOrderBooks :: OrderBookGroup -> (OrderBook -> OrderBook) -> OrderBookGroup
+withOrderBooks (OrderBookGroup orderBooks) fn =
+  OrderBookGroup (foldl (\books book -> Map.insert (getOrderBookKey book) (fn book) books) orderBooks orderBooks)
+
+unOrderBookGroup :: OrderBookGroup -> Map.Map OrderBookKey OrderBook
+unOrderBookGroup (OrderBookGroup orderBooks) = orderBooks

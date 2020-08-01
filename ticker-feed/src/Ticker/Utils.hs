@@ -42,14 +42,14 @@ type CurrencyExchangeKey = String
 
 type DBookMap = Map.Map CurrencyExchangeKey OrderBook
 
-type TickBuffer = Map.Map CurrencyExchangeKey Tick
+type TickBuffer = Map.Map OrderBookKey Tick
 
-newtype PrintTick =
-  PrintTick (Maybe CurrencyExchangeKey)
+data PrintTick =
+  PrintTick (Maybe Exchange) (Maybe CurrencyPair)
 
 data TickerHandle =
   TickerHandle
-    { tickerDBookMap     :: !DBookMap
+    { tickerDBookGroup   :: !OrderBookGroup
     , tickerBuffer       :: !TickBuffer
     , tickerDestinations :: ![Destination Tick]
     , tickerOrderQueue   :: C.Chan [BaseOrder]
@@ -83,16 +83,22 @@ instance WriteOutIO Influx.InfluxHandle Tick where
 
 {- | Overwriting default print, since Tick is an instance of Show -}
 instance WriteOutIO PrintTick Tick where
-  writeOutIO (PrintTick filter) tick = printTickFiltered filter tick >> hFlush stdout >> return (PrintTick filter)
+  writeOutIO printTick tick = printTickFiltered printTick tick >> hFlush stdout >> return printTick
 
 toCurrencyExchangeKey :: BaseOrder -> String
 toCurrencyExchangeKey order = show (orderCurrencyPair order) ++ show (orderExchange order)
 
-printTickFiltered :: Maybe CurrencyExchangeKey -> Tick -> IO ()
-printTickFiltered Nothing tick = printTick tick
-printTickFiltered (Just currExchangeKey) tick@(Tick ask bid currency exchange timestamp)
-  | currExchangeKey == show currency ++ show exchange = printTick tick
+printTickFiltered :: PrintTick -> Tick -> IO ()
+printTickFiltered (PrintTick (Just exchange) (Just currency)) tick@(Tick _ _ tickCurrency tickExchange _)
+  | exchange == tickExchange && currency == tickCurrency = printTick tick
   | otherwise = return ()
+printTickFiltered (PrintTick (Just exchange) Nothing) tick@(Tick _ _ _ tickExchange _)
+  | exchange == tickExchange = printTick tick
+  | otherwise = return ()
+printTickFiltered (PrintTick Nothing (Just currency)) tick@(Tick _ _ tickCurrency _ _)
+  | currency == tickCurrency = printTick tick
+  | otherwise = return ()
+printTickFiltered _ tick = printTick tick
 
 printTick :: Tick -> IO ()
 printTick (Tick ask bid currency exchange timestamp) =
