@@ -4,14 +4,11 @@
 module Main where
 
 import qualified Control.Concurrent.Chan as Chan
-import qualified Data.ByteString         as BS
-import qualified Data.ByteString.Lazy    as BL
 import qualified Data.Map                as Map
 
 import           Control.Concurrent
 import           Control.Exception
 import           Control.Monad
-import           Data.Aeson
 import           Data.Configurator
 import           Data.Configurator.Types
 import           Exchange.Binance.Utils  as Binance
@@ -19,8 +16,6 @@ import           Exchange.Bitstamp.Utils as Bitstamp
 import           Exchange.Handler
 import           Exchange.Kraken.Utils   as Kraken
 import           Finance
-import           Network.Kafka
-import           Network.Kafka.Producer
 import           System.FilePath
 import           System.IO
 import           Ticker.Utils
