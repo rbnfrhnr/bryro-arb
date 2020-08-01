@@ -55,14 +55,14 @@ runTransform tickerHandle@(TickerHandle dBookMap tBuffer destis queue) =
   (\orders -> pure (TickerHandle (foldl updateOrderBookGroup dBookMap orders) tBuffer destis queue)) >>=
   (\tickerHandleUpdated ->
      foldM
-       (\tickerHandle' orderBook -> check orderBook tickerHandle')
+       (\tickerHandle' orderBook -> handleTickAndWriteIO orderBook tickerHandle')
        tickerHandleUpdated
        (unOrderBookGroup (tickerDBookGroup tickerHandleUpdated))) >>=
   runTransform >>
   return ()
 
-check :: OrderBook -> TickerHandle -> IO TickerHandle
-check orderBook tickerHandle@(TickerHandle orderBookGroup tickerBuffer destis queue)
+handleTickAndWriteIO :: OrderBook -> TickerHandle -> IO TickerHandle
+handleTickAndWriteIO orderBook tickerHandle@(TickerHandle orderBookGroup tickerBuffer destis queue)
   | Just tick /= mbExistingTick =
     writeOutIO destis tick >>= (\destis' -> pure (TickerHandle orderBookGroup tickerBuffer' destis' queue))
   | otherwise = pure tickerHandle
