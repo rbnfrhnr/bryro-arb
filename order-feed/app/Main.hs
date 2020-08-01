@@ -26,18 +26,13 @@ import           Exchange.Kraken.Utils    as Kraken
 import           Finance
 import           Network.Kafka
 import           Network.Kafka.Producer
+import           Order.Utils
 import           System.FilePath
 import           System.IO
 import           Utils.Forward            (Destination (..), SimpleOut (..),
                                            WriteOutIO, writeOutIO)
 import           Utils.Influx             as Influx
 import           Utils.Kafka              as Kafka
-
-data OrderFeedHandle =
-  OrderFeedHandle
-    { queue        :: Chan.Chan [BaseOrder]
-    , destinations :: [Destination [BaseOrder]]
-    }
 
 main :: IO ()
 main = configFile >>= either print (Main.init >=> run)
@@ -59,26 +54,3 @@ run (OrderFeedHandle queue destinations) =
   Chan.readChan queue >>= writeOutIO destinations >>= run . newOrderFeedHandle >> return ()
   where
     newOrderFeedHandle destinations' = OrderFeedHandle queue destinations'
-
-instance InfluxData BaseOrder where
-  toInfluxData (BaseOrder exchange currency price quantity time orderType) =
-    (tags, fields, Just utcTime :: Maybe UTCTime)
-    where
-      tags =
-        Map.fromList
-          [ ("currency", stringFormatter (show currency))
-          , ("exchange", stringFormatter (show exchange))
-          , ("type", stringFormatter (show orderType))
-          ]
-      fields = Map.fromList [("price", FieldFloat price), ("quantity", FieldFloat quantity)]
-      utcTime = posixSecondsToUTCTime $ realToFrac $ fromIntegral time / (1000 * 1000)
-      stringFormatter = formatKey F.string
-
-instance KafkaData BaseOrder where
-  toKafkaData order = makeMessage $ BL.toStrict $ Aeson.encode order
-
-instance WriteOutIO Kafka.WriteHandle [BaseOrder] where
-  writeOutIO wKafka orders = foldM Kafka.writeToKafka wKafka orders
-
-instance WriteOutIO Influx.InfluxHandle [BaseOrder] where
-  writeOutIO influxCon orders = foldM Influx.writeAsync influxCon orders
