@@ -11,10 +11,9 @@ import           Control.Exception
 import           Control.Monad
 import           Data.Configurator
 import           Data.Configurator.Types
-import           Exchange.Binance.Utils  as Binance
-import           Exchange.Bitstamp.Utils as Bitstamp
-import           Exchange.Handler
-import           Exchange.Kraken.Utils   as Kraken
+import           Exchange
+import           Exchange.Types          (ExchangeAdapterImpl (..),
+                                          subscribeOrderBook)
 import           Finance
 import           System.FilePath
 import           System.IO
@@ -31,12 +30,13 @@ main = configFileKafka >>= withConfig
 
 withConfig :: Either SomeException Config -> IO ()
 withConfig (Right cfg) = do
+  orderQueue <- Chan.newChan
+  foldM_
+    (\queue (ExchangeAdapterImpl exchange) -> subscribeOrderBook exchange (Chan.writeChan queue) >> pure queue)
+    orderQueue
+    Exchange.createAllExchanges
   kafkaConfig <- Kafka.createKafkaConfig cfg
   influxHandle <- Influx.new cfg :: IO Influx.InfluxHandle
-  orderQueue <- Chan.newChan
-  Bitstamp.subscribeHandler $ decodeAndEnQueueHandler Bitstamp.parseToOrder orderQueue
-  Kraken.subscribeHandler $ decodeAndEnQueueHandler Kraken.parseToOrder orderQueue
-  Binance.subscribeHandler $ decodeAndEnQueueHandler Binance.parseToOrder orderQueue
   runTransform
     (TickerHandle
        openGroup

@@ -1,28 +1,29 @@
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE FlexibleInstances         #-}
+{-# LANGUAGE MultiParamTypeClasses     #-}
+{-# LANGUAGE OverloadedStrings         #-}
+{-# LANGUAGE ScopedTypeVariables       #-}
 
 module Main where
 
-import qualified Control.Concurrent.Chan  as Chan
+import qualified Control.Concurrent.Chan as Chan
 
 import           Control.Exception
 import           Control.Monad
 import           Data.Configurator
 import           Data.Configurator.Types
-import           Exchange.Binance.Utils   as Binance
-import           Exchange.Bitstamp.Utils  as Bitstamp
-import           Exchange.Handler
-import           Exchange.Kraken.Utils    as Kraken
+import           Exchange
+import           Exchange.Types          (ExchangeAdapter,
+                                          ExchangeAdapterImpl (..),
+                                          subscribeOrderBook)
 import           Finance
 import           Order.Utils
 import           System.FilePath
 import           System.IO
-import           Utils.Forward            (Destination (..), SimpleOut (..),
-                                           WriteOutIO, writeOutIO)
-import           Utils.Influx             as Influx
-import           Utils.Kafka              as Kafka
+import           Utils.Forward           (Destination (..), SimpleOut (..),
+                                          WriteOutIO, writeOutIO)
+import           Utils.Influx            as Influx
+import           Utils.Kafka             as Kafka
 
 main :: IO ()
 main = configFile >>= either print (Main.init >=> run)
@@ -32,9 +33,10 @@ main = configFile >>= either print (Main.init >=> run)
 init :: Config -> IO OrderFeedHandle
 init cfg = do
   orderQueue <- Chan.newChan
-  Bitstamp.subscribeHandler $ decodeAndEnQueueHandler Bitstamp.parseToOrder orderQueue
-  Kraken.subscribeHandler $ decodeAndEnQueueHandler Kraken.parseToOrder orderQueue
-  Binance.subscribeHandler $ decodeAndEnQueueHandler Binance.parseToOrder orderQueue
+  foldM_
+    (\queue (ExchangeAdapterImpl exchange) -> subscribeOrderBook exchange (Chan.writeChan queue) >> pure queue)
+    orderQueue
+    Exchange.createAllExchanges
   writeKafkaHandle <- fmap (\kafkaCfg -> writeHandle kafkaCfg "bryro-orders" 1) (Kafka.createKafkaConfig cfg)
   influxHandle <- Influx.new cfg
   return (OrderFeedHandle orderQueue [Destination writeKafkaHandle, Destination influxHandle])
