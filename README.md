@@ -2,7 +2,7 @@
 
 ## finance
 All finance related functions and datatypes. 
- - Depthbook handling
+ - Orderbook handling
  - Arbitrage detection
  - Tradeable Currency Pairs
 

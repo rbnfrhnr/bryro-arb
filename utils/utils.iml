@@ -10,35 +10,46 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="filepath-1.4.2.1" level="project" />
-    <orderEntry type="library" name="transformers-0.5.6.2" level="project" />
-    <orderEntry type="library" name="ghc-prim-0.5.3" level="project" />
-    <orderEntry type="library" name="integer-gmp-1.0.2.0" level="project" />
-    <orderEntry type="library" name="deepseq-1.4.4.0" level="project" />
-    <orderEntry type="library" name="unix-2.7.2.2" level="project" />
     <orderEntry type="library" name="base-4.12.0.0" level="project" />
     <orderEntry type="library" name="bytestring-0.10.8.2" level="project" />
-    <orderEntry type="library" name="containers-0.6.0.1" level="project" />
-    <orderEntry type="library" name="directory-1.3.3.0" level="project" />
-    <orderEntry type="library" name="text-1.2.3.1" level="project" />
-    <orderEntry type="library" name="time-1.8.0.2" level="project" />
-    <orderEntry type="library" name="array-0.5.3.0" level="project" />
-    <orderEntry type="library" name="binary-0.8.6.0" level="project" />
     <orderEntry type="library" name="bytestring-show-0.3.5.6" level="project" />
     <orderEntry type="library" name="configurator-0.3.0.0" level="project" />
+    <orderEntry type="library" name="connection-0.3.1" level="project" />
+    <orderEntry type="library" name="containers-0.6.0.1" level="project" />
+    <orderEntry type="library" name="directory-1.3.3.0" level="project" />
+    <orderEntry type="library" name="filepath-1.4.2.1" level="project" />
     <orderEntry type="library" name="influxdb-1.7.1.1" level="project" />
     <orderEntry type="library" name="lens-4.17.1" level="project" />
     <orderEntry type="library" name="milena-0.5.4.0" level="project" />
+    <orderEntry type="library" name="network-2.8.0.1" level="project" />
+    <orderEntry type="library" name="text-1.2.3.1" level="project" />
+    <orderEntry type="library" name="time-1.8.0.2" level="project" />
+    <orderEntry type="library" name="transformers-0.5.6.2" level="project" />
+    <orderEntry type="library" name="websockets-0.12.5.3" level="project" />
+    <orderEntry type="library" name="wuss-1.1.14" level="project" />
+    <orderEntry type="library" name="ghc-prim-0.5.3" level="project" />
+    <orderEntry type="library" name="integer-gmp-1.0.2.0" level="project" />
+    <orderEntry type="library" name="deepseq-1.4.4.0" level="project" />
+    <orderEntry type="library" name="array-0.5.3.0" level="project" />
+    <orderEntry type="library" name="binary-0.8.6.0" level="project" />
     <orderEntry type="library" name="attoparsec-0.13.2.3" level="project" />
     <orderEntry type="library" name="hashable-1.2.7.0" level="project" />
     <orderEntry type="library" name="unix-compat-0.5.2" level="project" />
     <orderEntry type="library" name="unordered-containers-0.2.10.0" level="project" />
+    <orderEntry type="library" name="basement-0.0.11" level="project" />
+    <orderEntry type="library" name="data-default-class-0.1.2.0" level="project" />
+    <orderEntry type="library" name="socks-0.6.0" level="project" />
+    <orderEntry type="library" name="tls-1.4.1" level="project" />
+    <orderEntry type="library" name="x509-1.7.5" level="project" />
+    <orderEntry type="library" name="x509-store-1.6.7" level="project" />
+    <orderEntry type="library" name="x509-system-1.6.6" level="project" />
+    <orderEntry type="library" name="x509-validation-1.6.11" level="project" />
+    <orderEntry type="library" name="unix-2.7.2.2" level="project" />
     <orderEntry type="library" name="aeson-1.4.5.0" level="project" />
     <orderEntry type="library" name="clock-0.8" level="project" />
     <orderEntry type="library" name="foldl-1.4.5" level="project" />
     <orderEntry type="library" name="http-client-0.6.4" level="project" />
     <orderEntry type="library" name="http-types-0.12.3" level="project" />
-    <orderEntry type="library" name="network-2.8.0.1" level="project" />
     <orderEntry type="library" name="optional-args-1.0.2" level="project" />
     <orderEntry type="library" name="scientific-0.3.6.2" level="project" />
     <orderEntry type="library" name="tagged-0.8.6" level="project" />
@@ -69,6 +80,21 @@
     <orderEntry type="library" name="resource-pool-0.2.3.2" level="project" />
     <orderEntry type="library" name="semigroups-0.18.5" level="project" />
     <orderEntry type="library" name="zlib-0.6.2.1" level="project" />
+    <orderEntry type="library" name="SHA-1.6.4.4" level="project" />
+    <orderEntry type="library" name="base64-bytestring-1.0.0.2" level="project" />
+    <orderEntry type="library" name="bytestring-builder-0.10.8.2.0" level="project" />
+    <orderEntry type="library" name="case-insensitive-1.2.0.11" level="project" />
+    <orderEntry type="library" name="entropy-0.4.1.5" level="project" />
+    <orderEntry type="library" name="streaming-commons-0.2.1.1" level="project" />
+    <orderEntry type="library" name="asn1-encoding-0.9.5" level="project" />
+    <orderEntry type="library" name="asn1-types-0.3.3" level="project" />
+    <orderEntry type="library" name="async-2.2.2" level="project" />
+    <orderEntry type="library" name="cryptonite-0.25" level="project" />
+    <orderEntry type="library" name="memory-0.14.18" level="project" />
+    <orderEntry type="library" name="asn1-parse-0.9.4" level="project" />
+    <orderEntry type="library" name="hourglass-0.2.12" level="project" />
+    <orderEntry type="library" name="pem-0.2.4" level="project" />
+    <orderEntry type="library" name="process-1.6.5.0" level="project" />
     <orderEntry type="library" name="base-compat-0.10.5" level="project" />
     <orderEntry type="library" name="dlist-0.8.0.7" level="project" />
     <orderEntry type="library" name="primitive-0.6.4.0" level="project" />
@@ -77,13 +103,10 @@
     <orderEntry type="library" name="mwc-random-0.14.0.0" level="project" />
     <orderEntry type="library" name="vector-builder-0.3.7.2" level="project" />
     <orderEntry type="library" name="blaze-builder-0.4.1.0" level="project" />
-    <orderEntry type="library" name="case-insensitive-1.2.0.11" level="project" />
     <orderEntry type="library" name="cookie-0.4.4" level="project" />
-    <orderEntry type="library" name="memory-0.14.18" level="project" />
     <orderEntry type="library" name="mime-types-0.1.0.9" level="project" />
     <orderEntry type="library" name="network-uri-2.6.1.0" level="project" />
     <orderEntry type="library" name="stm-2.5.0.0" level="project" />
-    <orderEntry type="library" name="streaming-commons-0.2.1.1" level="project" />
     <orderEntry type="library" name="integer-logarithms-1.0.3" level="project" />
     <orderEntry type="library" name="StateVar-1.2" level="project" />
     <orderEntry type="library" name="transformers-base-0.4.5.2" level="project" />
@@ -93,11 +116,7 @@
     <orderEntry type="library" name="pretty-1.1.3.6" level="project" />
     <orderEntry type="library" name="math-functions-0.3.2.1" level="project" />
     <orderEntry type="library" name="base-prelude-1.3" level="project" />
-    <orderEntry type="library" name="data-default-class-0.1.2.0" level="project" />
-    <orderEntry type="library" name="basement-0.0.11" level="project" />
     <orderEntry type="library" name="parsec-3.1.13.0" level="project" />
-    <orderEntry type="library" name="async-2.2.2" level="project" />
-    <orderEntry type="library" name="process-1.6.5.0" level="project" />
     <orderEntry type="library" name="void-0.7.3" level="project" />
     <orderEntry type="library" name="vector-th-unbox-0.2.1.6" level="project" />
   </component>

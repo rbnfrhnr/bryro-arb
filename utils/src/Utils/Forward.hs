@@ -12,6 +12,7 @@ module Utils.Forward
   ) where
 
 import           Control.Monad
+import           System.IO     (hFlush, stdout)
 
 {- | Type class for writing to the environment. Where 'a' typically is a Handle, 'b' is serializable and in
      combination can perform some IO action (writing to stdout, kafka, db etc) -}
@@ -32,7 +33,7 @@ data Destination b =
 
 {- | Allow every data type which is an instance of Show to be printed to stdout -}
 instance (Show a) => WriteOutIO SimpleOut a where
-  writeOutIO SimpleOut payload = print payload >> return SimpleOut
+  writeOutIO SimpleOut payload = print payload >> hFlush stdout >> return SimpleOut
 
 {- | writeOut can be applied to any Destination holding a value of instance WriteOut -}
 instance WriteOutIO (Destination b) b where

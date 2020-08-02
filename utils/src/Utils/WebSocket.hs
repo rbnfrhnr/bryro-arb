@@ -48,7 +48,7 @@ worker handle connection
   | isSubscribed = do
     result <- E.try (W.receiveDataMessage connection) :: IO (Either W.ConnectionException W.DataMessage)
     case result of
-      Left ex -> print ("Exception in Websocket connection " ++ show ex)
+      Left ex -> print ("Exception in Websocket connection " ++ show ex) >> hFlush stdout
       Right (W.Binary val) -> onMessage connection val >> worker handle connection
       Right (W.Text val1 val2) -> onMessage connection val1 >> worker handle connection
   | otherwise = onOpen connection >> worker (handle {wsSubscribed = True}) connection
