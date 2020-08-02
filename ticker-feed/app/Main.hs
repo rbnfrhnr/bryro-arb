@@ -31,10 +31,7 @@ main = configFileKafka >>= withConfig
 withConfig :: Either SomeException Config -> IO ()
 withConfig (Right cfg) = do
   orderQueue <- Chan.newChan
-  foldM_
-    (\queue (ExchangeAdapterImpl exchange) -> subscribeOrderBook exchange (Chan.writeChan queue) >> pure queue)
-    orderQueue
-    Exchange.createAllExchanges
+  _ <- subscribeOrderBookAll orderQueue
   kafkaConfig <- Kafka.createKafkaConfig cfg
   influxHandle <- Influx.new cfg :: IO Influx.InfluxHandle
   runTransform

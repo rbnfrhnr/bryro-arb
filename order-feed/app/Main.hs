@@ -33,10 +33,7 @@ main = configFile >>= either print (Main.init >=> run)
 init :: Config -> IO OrderFeedHandle
 init cfg = do
   orderQueue <- Chan.newChan
-  foldM_
-    (\queue (ExchangeAdapterImpl exchange) -> subscribeOrderBook exchange (Chan.writeChan queue) >> pure queue)
-    orderQueue
-    Exchange.createAllExchanges
+  _ <- subscribeOrderBookAll orderQueue
   writeKafkaHandle <- fmap (\kafkaCfg -> writeHandle kafkaCfg "bryro-orders" 1) (Kafka.createKafkaConfig cfg)
   influxHandle <- Influx.new cfg
   return (OrderFeedHandle orderQueue [Destination writeKafkaHandle, Destination influxHandle])
