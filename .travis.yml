@@ -73,6 +73,7 @@ jobs:
         - mv $TRAVIS_BUILD_DIR/order-feed/.stack-work/dist/x86_64-linux/Cabal-2.4.0.1/build/order-feed-exe/order-feed-exe
           ~/artifacts/order-feed-exe
         - mv ./order-feed.service ~/artifacts/order-feed.service
+        - mv ./resources/config.cfg ~/artifacts/config.cfg
         - cd ..
       deploy:
         provider: script
@@ -80,7 +81,8 @@ jobs:
         script:
           - scp -P 23 ~/artifacts/order-feed.service $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/order-feed
             && ssh -p 23 $DEPLOY_USER@$DEPLOY_HOST "sudo /bin/systemctl stop order-feed"
-            && scp -P 23 ~/artifacts/order-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/order-feed
+            && scp -P 23 ~/artifacts/config.cfg $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/order-feed/resources/config.cfg
+            && scp -P 23 ~/artifacts/order-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/order-feed/order-feed-exe
             && ssh -p 23 $DEPLOY_USER@$DEPLOY_HOST "sudo /bin/systemctl start order-feed"
         on:
           branch: staging
@@ -105,6 +107,7 @@ jobs:
         - mv $TRAVIS_BUILD_DIR/ticker-feed/.stack-work/dist/x86_64-linux/Cabal-2.4.0.1/build/ticker-feed-exe/ticker-feed-exe
           ~/artifacts/ticker-feed-exe
         - mv ./ticker-feed.service ~/artifacts/ticker-feed.service
+        - mv ./resources/config.cfg ~/artifacts/config.cfg
         - cd ..
       deploy:
         provider: script
@@ -112,6 +115,7 @@ jobs:
         script:
           - scp -P 23 ~/artifacts/ticker-feed.service $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/ticker-feed
             && ssh -p 23 $DEPLOY_USER@$DEPLOY_HOST "sudo /bin/systemctl stop ticker-feed"
+            && scp -P 23 ~/artifacts/config.cfg $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/ticker-feed/resources/config.cfg
             && scp -P 23 ~/artifacts/ticker-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/ticker-feed
             && ssh -p 23 $DEPLOY_USER@$DEPLOY_HOST "sudo /bin/systemctl start ticker-feed"
         on:
