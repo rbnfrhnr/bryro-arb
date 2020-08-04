@@ -3,6 +3,6 @@ Description=Ticker Feed. Publish to Kafka
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/stack exec /home/robin/ticker-feed/ticker-feed-exe
+ExecStart=/usr/local/bin/stack exec /home/robin/ticker-feed/ticker-feed-exe --cwd /home/robin/ticker-feed
 ExecStop=/bin/kill -15 $MAINPID
 Environment="HOME=/"
