@@ -79,7 +79,8 @@ jobs:
         provider: script
         skip_cleanup: true
         script:
-          - scp -P 23 ~/artifacts/order-feed.service $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/order-feed
+          - ssh -p 23 mkdir -p /home/$DEPLOY_USER/order-feed/
+            && scp -P 23 ~/artifacts/order-feed.service $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/order-feed
             && ssh -p 23 $DEPLOY_USER@$DEPLOY_HOST "sudo /bin/systemctl stop order-feed"
             && scp -P 23 ~/artifacts/config.cfg $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/order-feed/resources/config.cfg
             && scp -P 23 ~/artifacts/order-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/order-feed/order-feed-exe
@@ -113,7 +114,8 @@ jobs:
         provider: script
         skip_cleanup: true
         script:
-          - scp -P 23 ~/artifacts/ticker-feed.service $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/ticker-feed
+          - ssh -p 23 mkdir -p /home/$DEPLOY_USER/ticker-feed/
+            && scp -P 23 ~/artifacts/ticker-feed.service $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/ticker-feed/ticker-feed.service
             && ssh -p 23 $DEPLOY_USER@$DEPLOY_HOST "sudo /bin/systemctl stop ticker-feed"
             && scp -P 23 ~/artifacts/config.cfg $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/ticker-feed/resources/config.cfg
             && scp -P 23 ~/artifacts/ticker-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/ticker-feed
