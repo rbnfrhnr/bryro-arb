@@ -78,9 +78,9 @@ jobs:
         provider: script
         skip_cleanup: true
         script:
-          - ssh -p 23 $DEPLOY_USER@$DEPLOY_HOST "sudo /bin/systemctl stop order-feed"
+          - scp -P 23 ~/artifacts/order-feed.service $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/order-feed
+            && ssh -p 23 $DEPLOY_USER@$DEPLOY_HOST "sudo /bin/systemctl stop order-feed"
             && scp -P 23 ~/artifacts/order-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/order-feed
-            && scp -P 23 ~/artifacts/order-feed.service $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/order-feed
             && ssh -p 23 $DEPLOY_USER@$DEPLOY_HOST "sudo /bin/systemctl start order-feed"
         on:
           branch: staging
@@ -110,9 +110,9 @@ jobs:
         provider: script
         skip_cleanup: true
         script:
-          - ssh -p 23 $DEPLOY_USER@$DEPLOY_HOST "sudo /bin/systemctl stop ticker-feed"
+          - scp -P 23 ~/artifacts/ticker-feed.service $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/ticker-feed
+            && ssh -p 23 $DEPLOY_USER@$DEPLOY_HOST "sudo /bin/systemctl stop ticker-feed"
             && scp -P 23 ~/artifacts/ticker-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/ticker-feed
-            && scp -P 23 ~/artifacts/ticker-feed.service $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/ticker-feed
             && ssh -p 23 $DEPLOY_USER@$DEPLOY_HOST "sudo /bin/systemctl start ticker-feed"
         on:
           branch: staging
