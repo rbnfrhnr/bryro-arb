@@ -56,10 +56,12 @@ writeHandle config topic batchSize = WriteHandle (configToKafkaState config) (TN
 writeToKafka :: (KafkaData a) => WriteHandle -> a -> IO WriteHandle
 writeToKafka (WriteHandle kafkaState topicName batch batchSize) rawData
   | Prelude.length batch >= (batchSize - 1) =
-    runKafka kafkaState (produceMessages updatedBatch) >> return (WriteHandle kafkaState topicName [] batchSize)
+    runKafka kafkaState (produceMessages updatedBatch) >>=
+    either (\err -> print err >> pure (updatedHandle batch)) (\_ -> pure (updatedHandle []))
   | otherwise = return (WriteHandle kafkaState topicName updatedBatch batchSize)
   where
     updatedBatch = updateBatch batch topicName rawData
+    updatedHandle batch' = WriteHandle kafkaState topicName batch' batchSize
 
 {- | uses ReadKafka to read from a certain topic and returns the payload as bytesString if successful-}
 readFromKafka :: ReadHandle -> IO (Either KafkaClientError [ByteString])
