@@ -4,3 +4,5 @@
 /**/out/
 /.out
 /.stack-work
+**/*.yaml.lock
+**/*.out
