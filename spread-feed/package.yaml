@@ -7,8 +7,8 @@ maintainer:          "frehner.robin@gmail.com"
 copyright:           "2020 Robin Frehner"
 
 extra-source-files:
-- README.md
-- ChangeLog.md
+  - README.md
+  - ChangeLog.md
 
 # Metadata used when publishing your package
 # synopsis:            Short description of your package
@@ -20,7 +20,10 @@ extra-source-files:
 description:         Please see the README on GitHub at <https://github.com/rbnfrhnr/spread-feed#readme>
 
 dependencies:
-- base >= 4.7 && < 5
+  - base >= 4.7 && < 5
+  - configurator >=0.3.0.0
+  - filepath >=1.4.2.1
+  - utils >=0.1.0.0
 
 library:
   source-dirs: src
@@ -30,19 +33,19 @@ executables:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
     dependencies:
-    - spread-feed
+      - spread-feed
 
 tests:
   spread-feed-test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
     dependencies:
-    - spread-feed
+      - spread-feed

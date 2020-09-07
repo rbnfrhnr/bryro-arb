@@ -1,6 +1,10 @@
 module Main where
 
-import Lib
+import           Spread.Utils
+import           Utils.Forward
 
 main :: IO ()
-main = someFunc
+main = run 1
+
+run :: Int -> IO ()
+run num = createDestinations >>= (\destis -> writeOutIO destis num) >> return ()

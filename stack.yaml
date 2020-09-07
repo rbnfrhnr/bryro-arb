@@ -6,6 +6,7 @@ packages:
   - utils/
   - order-feed/
   - ticker-feed/
+  - spread-feed
 
 extra-deps:
   - milena-0.5.4.0@sha256:8d9f89ce25656f96b4741875ce0f9e876e6000c816d2c5ad0244fec2d627996e,2587
