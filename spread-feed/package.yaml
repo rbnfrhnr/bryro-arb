@@ -20,9 +20,12 @@ extra-source-files:
 description:         Please see the README on GitHub at <https://github.com/rbnfrhnr/spread-feed#readme>
 
 dependencies:
+  - aeson  >=1.4.4.0
   - base >= 4.7 && < 5
+  - bytestring ==0.10.8.2
   - configurator >=0.3.0.0
   - filepath >=1.4.2.1
+  - milena >=0.5.4.0
   - utils >=0.1.0.0
 
 library:

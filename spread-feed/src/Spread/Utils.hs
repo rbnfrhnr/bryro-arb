@@ -7,10 +7,15 @@ module Spread.Utils
   ( createDestinations
   ) where
 
+import qualified Data.ByteString.Lazy    as BL
+
 import           Control.Exception
 import           Control.Monad           (foldM, liftM)
+import           Data.Aeson
 import           Data.Configurator
 import           Data.Configurator.Types
+import           Network.Kafka
+import           Network.Kafka.Producer
 import           System.FilePath
 import           System.IO
 import           Utils.Forward
@@ -33,10 +38,13 @@ configFile = try $ load [Required $ "spread-feed" </> "resources" </> "config.cf
 
 createKafkaDest :: Config -> IO (Destination Int)
 createKafkaDest cfg =
-  Kafka.createKafkaConfig cfg >>= (\kafkaConfig -> pure (Destination (writeHandle kafkaConfig "bryro-ticker" 0)))
+  Kafka.createKafkaConfig cfg >>= (\kafkaConfig -> pure (Destination (writeHandle kafkaConfig "bryro-spreads" 0)))
 
 createInfluxDest :: Config -> IO (Destination Int)
 createInfluxDest cfg = pure (Destination SimpleOut)
 
 instance WriteOutIO WriteHandle Int where
-  writeOutIO handle val = putStrLn ("kafka" ++ show val) >> pure handle
+  writeOutIO handle val = writeToKafka handle val
+
+instance KafkaData Int where
+  toKafkaData val = makeMessage $ BL.toStrict $ encode val
