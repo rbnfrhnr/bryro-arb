@@ -6,12 +6,14 @@
 
 module Utils.Forward
   ( Destination(..)
+  , JSONStdOut(..)
   , SimpleOut(..)
   , WriteOutIO
   , writeOutIO
   ) where
 
 import           Control.Monad
+import           Data.Aeson
 import           System.IO     (hFlush, stdout)
 
 {- | Type class for writing to the environment. Where 'a' typically is a Handle, 'b' is serializable and in
@@ -22,6 +24,9 @@ class WriteOutIO a b where
 {- | Data type for simple stdout writing -}
 data SimpleOut =
   SimpleOut
+
+data JSONStdOut =
+  JSONStdOut
 
 {- | Destination is existentially quantified to allow for heterogeneous lists with instances of WriteOut
      Since Destination itself is an instance of WriteOut, the list of Destinations, a single Destination
@@ -34,6 +39,9 @@ data Destination b =
 {- | Allow every data type which is an instance of Show to be printed to stdout -}
 instance (Show a) => WriteOutIO SimpleOut a where
   writeOutIO SimpleOut payload = print payload >> hFlush stdout >> return SimpleOut
+
+instance (ToJSON a) => WriteOutIO JSONStdOut a where
+  writeOutIO JSONStdOut payload = print (encode payload) >> hFlush stdout >> return JSONStdOut
 
 {- | writeOut can be applied to any Destination holding a value of instance WriteOut -}
 instance WriteOutIO (Destination b) b where

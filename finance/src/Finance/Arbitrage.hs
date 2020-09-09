@@ -5,6 +5,8 @@ module Finance.Arbitrage
   , SpreadBook
   , SpreadKey
   , SpreadMessage(..)
+  , orderToSpreadMessage
+  , updateSpreadBook
   ) where
 
 import qualified Data.Map                   as Map
@@ -14,8 +16,8 @@ import           Finance.Arbitrage.Internal
 import           Finance.Order
 import           Finance.OrderBook
 
-toSpreadKey :: Spread -> SpreadKey
-toSpreadKey (Spread bidOrder _) = show exchange ++ show symbol ++ show price
+toSpreadKey :: Order BidOrder -> SpreadKey
+toSpreadKey bidOrder = show exchange ++ show symbol ++ show price
   where
     order = unBidOrder bidOrder
     exchange = orderExchange order
@@ -30,37 +32,36 @@ toSpreadKey (Spread bidOrder _) = show exchange ++ show symbol ++ show price
     - SpreadUpdate  -> SpreadKey is already in the map and there are still asking orders lower than the bid order
     - SpreadClosing -> SpreadKey is in the map but there are no asking orders lower than the bid order
      -}
-bidOrderToSpreadMessage :: Order BidOrder -> SpreadBook -> OrderBook -> (SpreadBook, Maybe SpreadMessage)
+bidOrderToSpreadMessage :: Order BidOrder -> SpreadBook -> OrderBook -> [SpreadMessage]
 bidOrderToSpreadMessage bidOrder spreadBook orderBook
-  | not spreadIsInMap && not (null lowerAskOrders) = (updatedSpreadBook, Just $ SpreadOpening spread)
-  | spreadIsInMap && not (null lowerAskOrders) = (updatedSpreadBook, Just $ SpreadUpdate spread)
-  | spreadIsInMap && null lowerAskOrders = (removedSpreadFromBook, Just $ SpreadClosing spread)
-  | otherwise = (spreadBook, Nothing)
+  | not spreadIsInMap && not (null lowerAskOrders) = [SpreadOpening spread]
+  | spreadIsInMap && not (null lowerAskOrders) = [SpreadUpdate spread]
+  | spreadIsInMap && null lowerAskOrders = [SpreadClosing spread]
+  | otherwise = []
   where
     askBook = orderBookAsk orderBook
     lowerAskOrders = getLowerAsks bidOrder orderBook
-    spread = Spread bidOrder lowerAskOrders
-    spreadKey = toSpreadKey spread
+    spread = Spread spreadKey bidOrder lowerAskOrders
+    spreadKey = toSpreadKey bidOrder
     spreadIsInMap = Map.member spreadKey spreadBook
-    updatedSpreadBook = Map.insert spreadKey spread spreadBook
     removedSpreadFromBook = Map.delete spreadKey spreadBook
 
 {- | If we are given an asking order, we fetch all the higher bid orders and create a spread message based on them -}
-askOrderToSpreadMessage :: Order AskOrder -> SpreadBook -> OrderBook -> (SpreadBook, Maybe [SpreadMessage])
+askOrderToSpreadMessage :: Order AskOrder -> SpreadBook -> OrderBook -> [SpreadMessage]
 askOrderToSpreadMessage askOrder spreadBook orderBook =
-  foldM
-    (\(spreadBook, list) bidOrder ->
-       updateTuple (spreadBook, list) (bidOrderToSpreadMessage bidOrder spreadBook orderBook))
-    (spreadBook, [])
-    higherBids
+  foldl (\list bidOrder -> list ++ bidOrderToSpreadMessage bidOrder spreadBook orderBook) [] higherBids
   where
     higherBids = getHigherBids askOrder orderBook
-    updateTuple (_, oldLIst) (newBook, newList) = (newBook, oldLIst ++ newList) :: (SpreadBook, Maybe [SpreadMessage])
 
-orderToSpreadMessage :: BaseOrder -> SpreadBook -> OrderBook -> (SpreadBook, Maybe [SpreadMessage])
+orderToSpreadMessage :: BaseOrder -> SpreadBook -> OrderBook -> [SpreadMessage]
 orderToSpreadMessage order spreadBook orderBook
-  | (Just ord) <- maybeBidOrder = fmap (: []) (bidOrderToSpreadMessage ord spreadBook orderBook)
+  | (Just ord) <- maybeBidOrder = bidOrderToSpreadMessage ord spreadBook orderBook
   | (Just ord) <- maybeAskOrder = askOrderToSpreadMessage ord spreadBook orderBook
   where
     maybeBidOrder = toBidOrder order
     maybeAskOrder = toAskOrder order
+
+updateSpreadBook :: SpreadBook -> SpreadMessage -> SpreadBook
+updateSpreadBook spreadBook (SpreadOpening spread) = Map.insert (spreadKey spread) spread spreadBook
+updateSpreadBook spreadBook (SpreadUpdate spread) = Map.insert (spreadKey spread) spread spreadBook
+updateSpreadBook spreadBook (SpreadClosing spread) = Map.delete (spreadKey spread) spreadBook

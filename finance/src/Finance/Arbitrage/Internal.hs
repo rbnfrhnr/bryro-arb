@@ -1,4 +1,5 @@
-{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DataKinds     #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Finance.Arbitrage.Internal
   ( Spread(..)
@@ -7,21 +8,28 @@ module Finance.Arbitrage.Internal
   , SpreadMessage(..)
   ) where
 
+import           Data.Aeson    (FromJSON, ToJSON)
 import           Data.Map
 import           Finance.Order
+import           GHC.Generics  (Generic)
 
 data Spread =
   Spread
-    { spreadBid  :: !(Order BidOrder)
+    { spreadKey  :: SpreadKey
+    , spreadBid  :: !(Order BidOrder)
     , spreadAsks :: ![Order AskOrder]
     }
-  deriving (Show)
+  deriving (Show, Generic)
+
+instance ToJSON Spread
 
 data SpreadMessage
   = SpreadOpening Spread
   | SpreadUpdate Spread
   | SpreadClosing Spread
-  deriving (Show)
+  deriving (Show, Generic)
+
+instance ToJSON SpreadMessage
 
 type SpreadKey = String
 

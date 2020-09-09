@@ -14,6 +14,7 @@ module Finance.OrderBook
   , openOrderBook
   , unOrderBookGroup
   , updateOrderBook
+  , updateOrderBookCollection
   , updateOrderBookGroup
   ) where
 
@@ -126,6 +127,15 @@ updateOrderBookGroup (OrderBookGroup orderBooks) order
   where
     orderBookKey = createOrderBookKey order
     newOrderBook = openOrderBook (orderExchange order) (orderCurrencyPair order)
+
+updateOrderBookCollection :: OrderBookCollection -> BaseOrder -> OrderBookCollection
+updateOrderBookCollection bookCollection order
+  | (Just orderBook) <- Map.lookup currency bookCollection =
+    Map.insert currency (updateOrderBook orderBook order) bookCollection
+  | otherwise = Map.insert currency (updateOrderBook (openOrderBook exchange currency) order) bookCollection
+  where
+    currency = orderCurrencyPair order
+    exchange = orderExchange order
 
 withOrderBooks :: OrderBookGroup -> (OrderBook -> OrderBook) -> OrderBookGroup
 withOrderBooks (OrderBookGroup orderBooks) fn =

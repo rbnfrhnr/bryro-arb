@@ -1,6 +1,7 @@
-{-# LANGUAGE DataKinds      #-}
-{-# LANGUAGE DeriveGeneric  #-}
-{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE DataKinds         #-}
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE KindSignatures    #-}
 
 module Finance.Order
   ( Order
@@ -37,7 +38,11 @@ data RealOrder
 {- | Base representation of an order offered through an exchange. -}
 newtype Order (a :: RealOrder) =
   Order BaseOrder
-  deriving (Show)
+  deriving (Show, Generic)
+
+instance ToJSON (Order AskOrder)
+
+instance ToJSON (Order BidOrder)
 
 data BaseOrder =
   BaseOrder
