@@ -27,33 +27,6 @@ stages:
 jobs:
   include:
     - stage: Build Order Feed
-      name: Prod Build
-      language: generic
-      cache:
-        directories:
-          - "$HOME/.stack"
-      addons:
-        apt:
-          packages:
-            - libgmp-dev
-      install:
-        - cd ./order-feed
-        - stack --no-terminal --install-ghc test --only-dependencies
-        - cd ..
-      script:
-        - cd ./order-feed
-        - stack build
-        - mv $TRAVIS_BUILD_DIR/order-feed/.stack-work/dist/x86_64-linux/Cabal-2.4.0.1/build/order-feed-exe/order-feed-exe
-          ~/artifacts/order-feed-exe
-        - mv ./order-feed.service ~/artifacts/order-feed.service
-        - cd ..
-      deploy:
-        provider: script
-        skip_cleanup: true
-        script:
-          - scp ~/artifacts/order-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents
-            && scp ~/artifacts/order-feed.service $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/Documents
-      if: branch = master
     - name: Staging Build
       language: generic
       if: branch = staging
@@ -124,37 +97,37 @@ jobs:
         on:
           branch: staging
     - stage: Build Spread Feed
-        name: Staging Build
-        language: generic
-        if: branch = staging
-        cache:
-          directories:
-            - "$HOME/.stack"
-        addons:
-          apt:
-            packages:
-              - libgmp-dev
-        install:
-          - cd ./spread-feed
-          - stack --no-terminal --install-ghc test --only-dependencies
-          - cd ..
+      name: Staging Build
+      language: generic
+      if: branch = staging
+      cache:
+        directories:
+          - "$HOME/.stack"
+      addons:
+        apt:
+          packages:
+            - libgmp-dev
+      install:
+        - cd ./spread-feed
+        - stack --no-terminal --install-ghc test --only-dependencies
+        - cd ..
+      script:
+        - cd ./spread-feed
+        - stack build
+        - mv $TRAVIS_BUILD_DIR/spread-feed/.stack-work/dist/x86_64-linux/Cabal-2.4.0.1/build/spread-feed-exe/spread-feed-exe
+          ~/artifacts/spread-feed-exe
+        - mv ./spread-feed.service ~/artifacts/spread-feed.service
+        - mv ./resources/config.cfg ~/artifacts/config.cfg
+        - cd ..
+      deploy:
+        provider: script
+        skip_cleanup: true
         script:
-          - cd ./spread-feed
-          - stack build
-          - mv $TRAVIS_BUILD_DIR/spread-feed/.stack-work/dist/x86_64-linux/Cabal-2.4.0.1/build/spread-feed-exe/spread-feed-exe
-            ~/artifacts/spread-feed-exe
-          - mv ./spread-feed.service ~/artifacts/spread-feed.service
-          - mv ./resources/config.cfg ~/artifacts/config.cfg
-          - cd ..
-        deploy:
-          provider: script
-          skip_cleanup: true
-          script:
-            - ssh -p 23 $DEPLOY_USER@$DEPLOY_HOST "mkdir -p /home/$DEPLOY_USER/spread-feed/ && mkdir -p /home/$DEPLOY_USER/spread-feed/resources"
-              && scp -P 23 ~/artifacts/spread-feed.service $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/spread-feed/spread-feed.service
-              && ssh -p 23 $DEPLOY_USER@$DEPLOY_HOST "sudo /bin/systemctl stop spread-feed"
-              && scp -P 23 ~/artifacts/config.cfg $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/spread-feed/resources/config.cfg
-              && scp -P 23 ~/artifacts/spread-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/spread-feed
-              && ssh -p 23 $DEPLOY_USER@$DEPLOY_HOST "sudo /bin/systemctl start spread-feed"
-          on:
-            branch: staging
+          - ssh -p 23 $DEPLOY_USER@$DEPLOY_HOST "mkdir -p /home/$DEPLOY_USER/spread-feed/ && mkdir -p /home/$DEPLOY_USER/spread-feed/resources"
+            && scp -P 23 ~/artifacts/spread-feed.service $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/spread-feed/spread-feed.service
+            && ssh -p 23 $DEPLOY_USER@$DEPLOY_HOST "sudo /bin/systemctl stop spread-feed"
+            && scp -P 23 ~/artifacts/config.cfg $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/spread-feed/resources/config.cfg
+            && scp -P 23 ~/artifacts/spread-feed-exe $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/spread-feed
+            && ssh -p 23 $DEPLOY_USER@$DEPLOY_HOST "sudo /bin/systemctl start spread-feed"
+        on:
+          branch: staging
