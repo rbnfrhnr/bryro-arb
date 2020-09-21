@@ -1,0 +1,8 @@
+[Unit]
+Description=Spread Feed. Publish to Kafka
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/stack exec /home/robin/spread-feed/spread-feed-exe --cwd /home/robin/spread-feed
+ExecStop=/bin/kill -15 $MAINPID
+Environment="HOME=/"

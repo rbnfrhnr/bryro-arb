@@ -21,7 +21,7 @@ data SpreadHandle =
 
 new :: IO SpreadHandle
 new = do
-  destis <- fmap ([Destination JSONStdOut] ++) createDestinations
+  destis <- createDestinations
   orderQueue <- Chan.newChan
   _ <- subscribeOrderBookAll orderQueue
   pure $ SpreadHandle destis orderBookCollection spreadBook orderQueue
