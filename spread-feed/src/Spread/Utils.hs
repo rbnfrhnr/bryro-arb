@@ -43,7 +43,7 @@ createDestinations =
          [createKafkaDest cfg, createInfluxDest cfg])
 
 configFile :: IO (Either SomeException Config)
-configFile = try $ load [Required $ "spread-feed" </> "resources" </> "config.cfg"]
+configFile = try $ load [Required $ "resources" </> "config.cfg"]
 
 createKafkaDest :: Config -> IO (Destination SpreadMessage)
 createKafkaDest cfg =
