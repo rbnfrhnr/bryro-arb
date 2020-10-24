@@ -1,4 +1,7 @@
-{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE DataKinds                 #-}
+{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE FlexibleInstances         #-}
+{-# LANGUAGE MultiParamTypeClasses     #-}
 
 module Main where
 
@@ -9,12 +12,17 @@ import           Exchange
 import           Finance
 import           Finance.Arbitrage
 import           Spread.Utils
+import           System.IO               (hFlush, stdout)
 import           Utils.Forward
+
+
+instance ToOrderBookGroupKey CurrencyPair where
+  toOrderBookGroupKey order = orderCurrencyPair order
 
 data SpreadHandle =
   SpreadHandle
     { spreadHandleDestinations        :: [Destination SpreadMessage]
-    , spreadHandleOrderBookCollection :: OrderBookCollection
+    , spreadHandleOrderBookCollection :: OrderBookGroup CurrencyPair
     , spreadHandleSpreadBook          :: SpreadBook
     , spreadHandleOrderQueue          :: Chan.Chan [BaseOrder]
     }
@@ -26,7 +34,7 @@ new = do
   _ <- subscribeOrderBookAll orderQueue
   pure $ SpreadHandle destis orderBookCollection spreadBook orderQueue
   where
-    orderBookCollection = Map.empty :: Map.Map CurrencyPair OrderBook
+    orderBookCollection = createOrderBookGroup :: OrderBookGroup CurrencyPair
     spreadBook = Map.empty :: Map.Map SpreadKey Spread
 
 main :: IO ()
@@ -41,10 +49,10 @@ run handle@(SpreadHandle destis books spreads orderQueue) = do
 
 handleSpread :: SpreadHandle -> BaseOrder -> IO SpreadHandle
 handleSpread handle@(SpreadHandle destis books spreads orderQueue) order
-  | (Just book) <- Map.lookup currencyPair books' =
-    foldM withSpreadMsg (SpreadHandle destis books' spreads orderQueue) (orderToSpreadMessage order spreads book)
+  | (Just book) <- Map.lookup currencyPair (unOrderBookGroup updatedBook) =
+    foldM withSpreadMsg (SpreadHandle destis updatedBook spreads orderQueue) (orderToSpreadMessage order spreads book)
   where
-    books' = updateOrderBookCollection books order
+    updatedBook = updateOrderBookInGroup books order
     currencyPair = orderCurrencyPair order
 
 withSpreadMsg :: SpreadHandle -> SpreadMessage -> IO SpreadHandle

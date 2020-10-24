@@ -22,6 +22,9 @@ import           Utils.Forward
 import           Utils.Influx            as Influx
 import           Utils.Kafka             as Kafka
 
+instance ToOrderBookGroupKey (Exchange, CurrencyPair) where
+  toOrderBookGroupKey order = (orderExchange order, orderCurrencyPair order)
+
 configFileKafka :: IO (Either SomeException Config)
 configFileKafka = try $ load [Required $ "resources" </> "config.cfg"]
 
@@ -36,15 +39,17 @@ withConfig (Right cfg) = do
   influxHandle <- Influx.new cfg :: IO Influx.InfluxHandle
   runTransform
     (TickerHandle
-       openGroup
+       createOrderBookGroup
        Map.empty
-       [Destination (writeHandle kafkaConfig "bryro-ticker" 0), Destination influxHandle]
+       [ Destination (writeHandle kafkaConfig "bryro-ticker" 0)
+       , Destination influxHandle
+       ]
        orderQueue)
 
 runTransform :: TickerHandle -> IO ()
 runTransform tickerHandle@(TickerHandle dBookMap tBuffer destis queue) =
   Chan.readChan queue >>=
-  (\orders -> pure (TickerHandle (foldl updateOrderBookGroup dBookMap orders) tBuffer destis queue)) >>=
+  (\orders -> pure (TickerHandle (foldl updateOrderBookInGroup dBookMap orders) tBuffer destis queue)) >>=
   (\tickerHandleUpdated ->
      foldM
        (\tickerHandle' orderBook -> handleTickAndWriteIO orderBook tickerHandle')
@@ -60,6 +65,6 @@ handleTickAndWriteIO orderBook tickerHandle@(TickerHandle orderBookGroup tickerB
   | otherwise = pure tickerHandle
   where
     tick = getTick orderBook
-    orderBookKey = OrderBookKey (tickExchange tick) (tickCurrency tick)
+    orderBookKey = (tickExchange tick, tickCurrency tick)
     mbExistingTick = Map.lookup orderBookKey tickerBuffer
     tickerBuffer' = Map.insert orderBookKey tick tickerBuffer

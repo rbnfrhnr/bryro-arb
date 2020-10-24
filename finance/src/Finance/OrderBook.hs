@@ -2,20 +2,12 @@
 
 module Finance.OrderBook
   ( OrderBook(..)
-  , OrderBookCollection(..)
-  , OrderBookGroup(..)
   , OrderKey(..)
-  , OrderBookKey(..)
   , getHigherBids
   , getLowerAsks
-  , getOrderBookKey
   , getTick
-  , openGroup
   , openOrderBook
-  , unOrderBookGroup
   , updateOrderBook
-  , updateOrderBookCollection
-  , updateOrderBookGroup
   ) where
 
 import qualified Data.Map                   as Map
@@ -98,48 +90,3 @@ timestampOrDefault (Just askOrder) (Just bidOrder)
   where
     askTime = orderTimestamp (unAskOrder askOrder)
     bidTime = orderTimestamp (unBidOrder bidOrder)
-
-createOrderBookKey :: BaseOrder -> OrderBookKey
-createOrderBookKey order = OrderBookKey (orderExchange order) (orderCurrencyPair order)
-
-getOrderBookKey :: OrderBook -> OrderBookKey
-getOrderBookKey orderBook = OrderBookKey (orderBookExchange orderBook) (orderBookCurrencyPair orderBook)
-
-openGroup :: OrderBookGroup
-openGroup = OrderBookGroup Map.empty
-
-orderBooksByExchange :: OrderBookGroup -> Exchange -> OrderBookGroup
-orderBooksByExchange (OrderBookGroup orderBooks) exchange =
-  OrderBookGroup $ Map.filter (\orderBook -> orderBookExchange orderBook == exchange) orderBooks
-
-orderBooksByCurrency :: OrderBookGroup -> CurrencyPair -> OrderBookGroup
-orderBooksByCurrency (OrderBookGroup orderBooks) currency =
-  OrderBookGroup $ Map.filter (\orderBook -> orderBookCurrencyPair orderBook == currency) orderBooks
-
-orderBookByOrder :: OrderBookGroup -> BaseOrder -> Maybe OrderBook
-orderBookByOrder (OrderBookGroup orderBooks) order = Map.lookup (createOrderBookKey order) orderBooks
-
-updateOrderBookGroup :: OrderBookGroup -> BaseOrder -> OrderBookGroup
-updateOrderBookGroup (OrderBookGroup orderBooks) order
-  | (Just orderBook) <- Map.lookup orderBookKey orderBooks =
-    OrderBookGroup (Map.insert orderBookKey (updateOrderBook orderBook order) orderBooks)
-  | otherwise = updateOrderBookGroup (OrderBookGroup (Map.insert orderBookKey newOrderBook orderBooks)) order
-  where
-    orderBookKey = createOrderBookKey order
-    newOrderBook = openOrderBook (orderExchange order) (orderCurrencyPair order)
-
-updateOrderBookCollection :: OrderBookCollection -> BaseOrder -> OrderBookCollection
-updateOrderBookCollection bookCollection order
-  | (Just orderBook) <- Map.lookup currency bookCollection =
-    Map.insert currency (updateOrderBook orderBook order) bookCollection
-  | otherwise = Map.insert currency (updateOrderBook (openOrderBook exchange currency) order) bookCollection
-  where
-    currency = orderCurrencyPair order
-    exchange = orderExchange order
-
-withOrderBooks :: OrderBookGroup -> (OrderBook -> OrderBook) -> OrderBookGroup
-withOrderBooks (OrderBookGroup orderBooks) fn =
-  OrderBookGroup (foldl (\books book -> Map.insert (getOrderBookKey book) (fn book) books) orderBooks orderBooks)
-
-unOrderBookGroup :: OrderBookGroup -> Map.Map OrderBookKey OrderBook
-unOrderBookGroup (OrderBookGroup orderBooks) = orderBooks

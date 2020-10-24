@@ -42,14 +42,14 @@ type CurrencyExchangeKey = String
 
 type DBookMap = Map.Map CurrencyExchangeKey OrderBook
 
-type TickBuffer = Map.Map OrderBookKey Tick
+type TickBuffer = Map.Map (Exchange, CurrencyPair) Tick
 
 data PrintTick =
   PrintTick (Maybe Exchange) (Maybe CurrencyPair)
 
 data TickerHandle =
   TickerHandle
-    { tickerDBookGroup   :: !OrderBookGroup
+    { tickerDBookGroup   :: !(OrderBookGroup (Exchange, CurrencyPair))
     , tickerBuffer       :: !TickBuffer
     , tickerDestinations :: ![Destination Tick]
     , tickerOrderQueue   :: C.Chan [BaseOrder]
